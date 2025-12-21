@@ -1,0 +1,28 @@
+# CMake files
+cmake-build-*/
+CMakeCache.txt
+CMakeFiles/
+Makefile
+compile_commands.json
+
+# Build artifacts
+build/
+out/
+*.slo
+*.lo
+*.o
+*.obj
+
+# Generated files by ANTLR
+**/antlr4-generated/
+**/*.interp
+**/*.tokens
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.iml
