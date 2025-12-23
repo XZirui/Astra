@@ -4,20 +4,24 @@
 
 namespace astra::ast {
     struct Expr : ASTNode {
+        explicit Expr(const SourceRange &r) : ASTNode(r) {
+        }
     };
 
     // primaryExpr : INTEGER_LITERAL
     struct LiteralExpr : Expr {
         uint64_t value = 0; // TODO
 
-        explicit LiteralExpr(uint64_t value) : value(value) {}
+        explicit LiteralExpr(const SourceRange &r, uint64_t value) : Expr(r), value(value) {
+        }
     };
 
     // primaryExpr : IDENTIFIER
     struct VarExpr : Expr {
         Identifier *name;
 
-        explicit VarExpr(Identifier *name) : name(name) {}
+        explicit VarExpr(const SourceRange &r, Identifier *name) : Expr(r), name(name) {
+        }
     };
 
     // unaryExpr
@@ -25,6 +29,9 @@ namespace astra::ast {
         enum class Op { Add, Sub }; // TODO
         Op op;
         Expr *operand;
+
+        UnaryExpr(const SourceRange &r, Op op, Expr *operand) : Expr(r), op(op), operand(operand) {
+        }
     };
 
     // from disjunction to multiplication
@@ -33,5 +40,8 @@ namespace astra::ast {
         Op op;
         Expr *lhs;
         Expr *rhs;
+
+        BinaryExpr(const SourceRange &r, Op op, Expr *lhs, Expr *rhs) : Expr(r), op(op), lhs(lhs), rhs(rhs) {
+        }
     };
 }

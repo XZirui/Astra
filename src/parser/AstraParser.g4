@@ -99,8 +99,7 @@ unaryOperator
     ;
 
 unaryExpr
-    : unaryOperator unaryExpr
-    | primaryExpr
+    : unaryOperator* primaryExpr
     ;
 
 primaryExpr

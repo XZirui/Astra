@@ -1,16 +1,30 @@
+#include <ANTLRInputStream.h>
 #include <iostream>
 
-#include <antlr4-runtime/ANTLRInputStream.h>
+#include <astra/ast/ASTBuilder.hpp>
 
-#include <astra/ast/ast.h>
+#include "astra/parser/AstraLexer.h"
+#include "astra/parser/AstraParser.h"
 
 int main() {
-    std::cout << "Hello World!\n" << std::endl;
+    auto input = R"(
+if (x > 0) {
+    return 4 < y + 3 * 2 / 4;
+} else {
+    return x == 10;
+}
+    )";
 
-    antlr4::ANTLRInputStream input("test input");
-    std::cout << "ANTLR input size = " << input.size() << std::endl;
+    antlr4::ANTLRInputStream input_stream(input);
+    astra::parser::AstraLexer lexer(&input_stream);
+    antlr4::CommonTokenStream tokens(&lexer);
 
-    astra::ast::Node* node = nullptr;
-    std::cout << "AST node ptr = " << node << std::endl;
+    astra::parser::AstraParser parser(&tokens);
+    auto tree = parser.file();
+
+    std::cout << tree->toStringTree(&parser, true) << std::endl;
+
+    auto *astCtx = new astra::ast::ASTContext();
+    astra::ast::ASTBuilder builder(*astCtx);
     return 0;
 }

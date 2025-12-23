@@ -1,13 +1,15 @@
 #pragma once
 #include <string_view>
+#include <string>
 #include <unordered_map>
 #include <utility>
 
 #include "ArenaAllocator.hpp"
 #include "Type.hpp"
-#include "Node.hpp"
 
 namespace astra::ast {
+    struct Identifier;
+
     class ASTContext {
         ArenaAllocator allocator;
         std::unordered_map<std::string, Identifier *> identifiers;
@@ -22,7 +24,7 @@ namespace astra::ast {
         template<typename T, typename... Args>
         T *create(Args &&... args) {
             void *mem = allocator.allocate(sizeof(T), alignof(T));
-            return new(mem) T(std::forward<Args>(args)...);
+            return new(mem) T{std::forward<Args>(args)...};
         }
 
         // Identifier

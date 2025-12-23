@@ -14,6 +14,7 @@ namespace astra::ast {
 
     struct ASTNode {
         SourceRange range;
+        explicit ASTNode(const SourceRange& r) : range(r) {}
         virtual ~ASTNode() = default;
     };
 }

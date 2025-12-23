@@ -1,10 +1,10 @@
 #include "astra/ast/ASTContext.hpp"
-
-#include <string>
+#include "astra/ast/Node.hpp"
 #include <cstring>
 
 namespace astra::ast {
-    ASTContext::ASTContext(): identifiers() {
+    // TODO: support For FileID management
+    ASTContext::ASTContext() {
         intType = create<BuiltinType>(BuiltinType::BuiltinKind::Int);
     }
 
