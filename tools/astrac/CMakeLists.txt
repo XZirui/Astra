@@ -1,8 +1,9 @@
 add_executable(astrac main.cpp)
 
 target_link_libraries(astrac
-    PRIVATE
+        PRIVATE
         antlr4_static
         astra-ast
         astra-parser
+        astra-support
 )

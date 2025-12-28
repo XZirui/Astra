@@ -4,6 +4,8 @@ target_sources(astra-ast
         PRIVATE
         ASTBuilder.cpp
         ASTContext.cpp
+        ASTDumper.cpp
+        ASTVisitor.cpp
 )
 
 target_include_directories(astra-ast
@@ -14,4 +16,5 @@ target_include_directories(astra-ast
 target_link_libraries(astra-ast
         PUBLIC
         astra-parser
+        astra-support
 )

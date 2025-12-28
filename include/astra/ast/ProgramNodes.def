@@ -1,0 +1,11 @@
+// ReSharper disable once CppMissingIncludeGuard
+
+// topLevelObject
+NODE(TopLevelObject, ASTNode,
+    ATTR(Stmt *, stmt)
+)
+
+// file
+NODE(Program, ASTNode,
+    ATTR_LIST(TopLevelObject *, objects)
+)

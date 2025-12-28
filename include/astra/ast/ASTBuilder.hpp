@@ -9,8 +9,8 @@ namespace astra::ast {
         ASTContext &astCtx;
 
         template<typename SubCtx, typename CtxOp, typename Getter>
-        std::any buildBinaryExpr(SourceRange range, const std::vector<SubCtx> &subs, const std::vector<CtxOp> &ops,
-                                             Getter getter);
+        std::any buildBinaryExpr(support::SourceRange range, const std::vector<SubCtx> &subs, const std::vector<CtxOp> &ops,
+                                 Getter getter);
 
     public:
         explicit ASTBuilder(ASTContext &astCtx) : astCtx(astCtx) {

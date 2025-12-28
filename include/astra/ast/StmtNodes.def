@@ -1,0 +1,25 @@
+// ReSharper disable once CppMissingIncludeGuard
+
+ABSTRACT_NODE(Stmt, ASTNode)
+
+// statement : blockStmt
+NODE(BlockStmt, Stmt,
+     ATTR_LIST(Stmt *, statements)
+)
+
+// statement : exprStmt
+NODE(ExprStmt, Stmt,
+    ATTR(Expr *, expr)
+)
+
+// statement : ifStmt
+NODE(IfStmt, Stmt,
+    ATTR(Expr *, condition)
+    ATTR(Stmt *, thenBranch)
+    ATTR(Stmt *, elseBranch) // optional
+)
+
+// statement : returnStmt
+NODE(ReturnStmt, Stmt,
+    ATTR(Expr *, expr)
+)

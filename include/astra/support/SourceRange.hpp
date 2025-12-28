@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace astra::ast {
+namespace astra::support {
     using FileID = uint64_t;
 
     struct SourceLocation {
@@ -13,12 +13,9 @@ namespace astra::ast {
     struct SourceRange {
         SourceLocation begin;
         SourceLocation end;
-        FileID file;
+        FileID file{};
 
         // TODO: support For FileID management
-
-        SourceRange(SourceLocation begin, SourceLocation end, FileID file) : begin(begin), end(end), file(file) {
-        }
 
         // Create SourceRange from an ANTLR4 parser rule context
         // [begin, end)

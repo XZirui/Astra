@@ -1,0 +1,26 @@
+// ReSharper disable once CppMissingIncludeGuard
+
+ABSTRACT_NODE(Expr, ASTNode)
+
+// primaryExpr : INTEGER_LITERAL
+NODE(LiteralExpr, Expr,
+    ATTR(uint64_t, value = 0)
+)
+
+// primaryExpr : IDENTIFIER
+NODE(VarExpr, Expr,
+    ATTR(Identifier *, name)
+)
+
+// unaryExpr
+NODE(UnaryExpr, Expr,
+    ATTR(Op, op)
+    ATTR(Expr *, operand)
+)
+
+// from disjunction to multiplication
+NODE(BinaryExpr, Expr,
+    ATTR(Op, op)
+    ATTR(Expr *, lhs)
+    ATTR(Expr *, rhs)
+)
