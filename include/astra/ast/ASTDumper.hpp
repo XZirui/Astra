@@ -19,22 +19,22 @@ namespace astra::ast {
 
     class ASTDumper final : public ASTConstVisitor<ASTDumper> {
     public:
-        explicit ASTDumper(support::Printer &out);
+        explicit ASTDumper(support::Printer &Out);
 
-        void dump(const Program *program);
+        void dump(const Program *Program);
 
-        void visitProgram(const Program *program);
-        void visitTopLevelObject(const TopLevelObject *top_level_object);
-        void visitBlockStmt(const BlockStmt *block_stmt);
-        void visitIfStmt(const IfStmt *if_stmt);
-        void visitExprStmt(const ExprStmt *expr_stmt);
-        void visitReturnStmt(const ReturnStmt *return_stmt);
-        void visitLiteralExpr(const LiteralExpr *literal_expr);
-        void visitVarExpr(const VarExpr *var_expr);
-        void visitUnaryExpr(const UnaryExpr *unary_expr);
-        void visitBinaryExpr(const BinaryExpr *binary_expr);
+        void visitProgram(const Program *Program);
+        void visitTopLevelObject(const TopLevelObject *TopLevelObject);
+        void visitBlockStmt(const BlockStmt *BlockStmt);
+        void visitIfStmt(const IfStmt *IfStmt);
+        void visitExprStmt(const ExprStmt *ExprStmt);
+        void visitReturnStmt(const ReturnStmt *ReturnStmt);
+        void visitLiteralExpr(const LiteralExpr *LiteralExpr);
+        void visitVarExpr(const VarExpr *VarExpr);
+        void visitUnaryExpr(const UnaryExpr *UnaryExpr);
+        void visitBinaryExpr(const BinaryExpr *BinaryExpr);
 
     private:
-        support::Printer &out;
+        support::Printer &Out;
     };
-}
+} // namespace astra::ast

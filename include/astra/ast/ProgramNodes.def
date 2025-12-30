@@ -2,10 +2,10 @@
 
 // topLevelObject
 NODE(TopLevelObject, ASTNode,
-    ATTR(Stmt *, stmt)
+    ATTR(Stmt *, Statement)
 )
 
 // file
 NODE(Program, ASTNode,
-    ATTR_LIST(TopLevelObject *, objects)
+    ATTR_LIST(TopLevelObject *, Objects)
 )

@@ -48,7 +48,7 @@ DISJ: '||';
 // Keywords
 //
 
-IMPOERT : 'import';
+IMPORT : 'import';
 IF : 'if';
 ELSE : 'else';
 FOR : 'for';

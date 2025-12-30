@@ -3,206 +3,36 @@
 #include "astra/ast/ASTBuilder.hpp"
 
 namespace astra::ast {
-    Program *ASTBuilder::build(parser::AstraParser::FileContext *ctx) {
-        return std::any_cast<Program *>(visit(ctx));
-    }
-
-    std::any ASTBuilder::visitFile(parser::AstraParser::FileContext *ctx) {
-        auto *program = astCtx.create<Program>(support::SourceRange::rangeOf(ctx));
-
-        for (auto *objCtx: ctx->topLevelObject()) {
-            program->objects.emplace_back(std::any_cast<TopLevelObject *>(visit(objCtx)));
+    template<typename SubCtx, typename CtxOp, typename Getter>
+    std::any ASTBuilder::buildBinaryExpr(support::SourceRange Range, const std::vector<SubCtx> &Subs,
+                                         const std::vector<CtxOp> &Ops,
+                                         Getter GetterFunction) {
+        if (Subs.size() == 1) {
+            return visit(Subs[0]);
         }
 
-        return program;
-    }
-
-    std::any ASTBuilder::visitTopLevelObject(parser::AstraParser::TopLevelObjectContext *ctx) {
-        // TODO
-        auto result = astCtx.create<TopLevelObject>(support::SourceRange::rangeOf(ctx));
-        result->stmt = std::any_cast<Stmt *>(visit(ctx->statement()));
-        return result;
-    }
-
-    std::any ASTBuilder::visitStatement(parser::AstraParser::StatementContext *ctx) {
-        if (ctx->blockStmt()) {
-            return visit(ctx->blockStmt());
-        }
-        if (ctx->ifStmt()) {
-            return visit(ctx->ifStmt());
-        }
-        if (ctx->exprStmt()) {
-            return visit(ctx->exprStmt());
-        }
-        if (ctx->returnStmt()) {
-            return visit(ctx->returnStmt());
+        auto *Result = std::any_cast<Expr *>(visit(Subs[0]));
+        for (size_t I = 1; I < Subs.size(); ++I) {
+            auto *Temp = AstCtx.create<BinaryExpr>(Range);
+            Temp->Operator = GetterFunction(Ops[I - 1]);
+            Temp->LHS = Result;
+            Temp->RHS = std::any_cast<Expr *>(visit(Subs[I]));
+            Result = Temp;
         }
 
-        assert(false && "Unknown statement type");
+        return Result;
     }
 
-    std::any ASTBuilder::visitBlockStmt(parser::AstraParser::BlockStmtContext *ctx) {
-        auto *blockStmt = astCtx.create<BlockStmt>(support::SourceRange::rangeOf(ctx));
-
-        for (auto *stmtCtx: ctx->statement()) {
-            blockStmt->statements.emplace_back(std::any_cast<Stmt *>(visit(stmtCtx)));
-        }
-
-        return static_cast<Stmt *>(blockStmt);
+    ASTBuilder::ASTBuilder(ASTContext &AstCtx) : AstCtx(AstCtx) {
     }
 
-    std::any ASTBuilder::visitIfStmt(parser::AstraParser::IfStmtContext *ctx) {
-        Stmt *elseStmt = nullptr;
-        if (ctx->statement().size() > 1) {
-            elseStmt = std::any_cast<Stmt *>(visit(ctx->statement(1)));
-        }
-
-        auto *ifStmt = astCtx.create<IfStmt>(support::SourceRange::rangeOf(ctx));
-        ifStmt->condition = std::any_cast<Expr *>(visit(ctx->expression()));
-        ifStmt->thenBranch = std::any_cast<Stmt *>(visit(ctx->statement(0)));
-        ifStmt->elseBranch = elseStmt;
-        return static_cast<Stmt *>(ifStmt);
+    Program *ASTBuilder::build(parser::AstraParser::FileContext *Ctx) {
+        return std::any_cast<Program *>(visit(Ctx));
     }
 
-    std::any ASTBuilder::visitExprStmt(parser::AstraParser::ExprStmtContext *ctx) {
-        auto *exprStmt = astCtx.create<ExprStmt>(support::SourceRange::rangeOf(ctx));
-        exprStmt->expr = std::any_cast<Expr *>(visit(ctx->expression()));
-        return static_cast<Stmt *>(exprStmt);
-    }
-
-    std::any ASTBuilder::visitReturnStmt(parser::AstraParser::ReturnStmtContext *ctx) {
-        Expr *expr = nullptr;
-        if (ctx->expression()) {
-            expr = std::any_cast<Expr *>(visit(ctx->expression()));
-        }
-
-        auto *returnStmt = astCtx.create<ReturnStmt>(support::SourceRange::rangeOf(ctx));
-        returnStmt->expr = expr;
-        return static_cast<Stmt *>(returnStmt);
-    }
-
-    std::any ASTBuilder::visitExpression(parser::AstraParser::ExpressionContext *ctx) {
-        return visit(ctx->disjunction());
-    }
-
-    std::any ASTBuilder::visitDisjunction(parser::AstraParser::DisjunctionContext *ctx) {
-        return buildBinaryExpr(
-            support::SourceRange::rangeOf(ctx),
-            ctx->conjunction(),
-            std::vector{ctx->DISJ()},
-            [](antlr4::tree::TerminalNode *) { return Op::Disj; }
-        );
-    }
-
-    std::any ASTBuilder::visitConjunction(parser::AstraParser::ConjunctionContext *ctx) {
-        return buildBinaryExpr(
-            support::SourceRange::rangeOf(ctx),
-            ctx->equality(),
-            std::vector{ctx->CONJ()},
-            [](antlr4::tree::TerminalNode *) { return Op::Conj; }
-        );
-    }
-
-    std::any ASTBuilder::visitEquality(parser::AstraParser::EqualityContext *ctx) {
-        return buildBinaryExpr(
-            support::SourceRange::rangeOf(ctx),
-            ctx->comparison(),
-            std::vector{ctx->equalityOperator()},
-            [](parser::AstraParser::EqualityOperatorContext *ctx) {
-                if (ctx->EQ()) {
-                    return Op::Eq;
-                }
-                return Op::Neq;
-            }
-        );
-    }
-
-    std::any ASTBuilder::visitComparison(parser::AstraParser::ComparisonContext *ctx) {
-        return buildBinaryExpr(
-            support::SourceRange::rangeOf(ctx),
-            ctx->addition(),
-            std::vector{ctx->comparisonOperator()},
-            [](parser::AstraParser::ComparisonOperatorContext *ctx) {
-                if (ctx->LT()) {
-                    return Op::Lt;
-                }
-                if (ctx->LE()) {
-                    return Op::Le;
-                }
-                if (ctx->GT()) {
-                    return Op::Gt;
-                }
-                return Op::Ge;
-            }
-        );
-    }
-
-    std::any ASTBuilder::visitAddition(parser::AstraParser::AdditionContext *ctx) {
-        return buildBinaryExpr(
-            support::SourceRange::rangeOf(ctx),
-            ctx->multiplication(),
-            ctx->additionOperator(),
-            [](parser::AstraParser::AdditionOperatorContext *ctx) {
-                if (ctx->ADD()) {
-                    return Op::Add;
-                }
-                return Op::Sub;
-            }
-        );
-    }
-
-    std::any ASTBuilder::visitMultiplication(parser::AstraParser::MultiplicationContext *ctx) {
-        return buildBinaryExpr(
-            support::SourceRange::rangeOf(ctx),
-            ctx->unaryExpr(),
-            ctx->multiplicationOperator(),
-            [](parser::AstraParser::MultiplicationOperatorContext *ctx) {
-                if (ctx->MULT()) {
-                    return Op::Mult;
-                }
-                if (ctx->DIV()) {
-                    return Op::Div;
-                }
-                return Op::Mod;
-            }
-        );
-    }
-
-    std::any ASTBuilder::visitUnaryExpr(parser::AstraParser::UnaryExprContext *ctx) {
-        if (!ctx->unaryOperator().size()) {
-            return visit(ctx->primaryExpr());
-        }
-
-        auto *result = std::any_cast<Expr *>(visit(ctx->primaryExpr()));
-        const auto getter = [](parser::AstraParser::UnaryOperatorContext *ctx) {
-            if (ctx->ADD()) {
-                return Op::Add;
-            }
-            return Op::Sub;
-        };
-        const auto &ops = ctx->unaryOperator();
-        for (auto it = ops.rbegin(); it != ops.rend(); ++it) {
-            auto *temp = astCtx.create<UnaryExpr>(support::SourceRange::rangeOf(ctx));
-            temp->op = getter(*it);
-            temp->operand = result;
-            result = temp;
-        }
-        return static_cast<Expr *>(result);
-    }
-
-    std::any ASTBuilder::visitParenExpr(parser::AstraParser::ParenExprContext *ctx) {
-        return visit(ctx->expression());
-    }
-
-    std::any ASTBuilder::visitVariable(parser::AstraParser::VariableContext *ctx) {
-        auto *result = astCtx.create<VarExpr>(support::SourceRange::rangeOf(ctx));
-        result->name = astCtx.getIdentifier(ctx->getText());
-        return static_cast<Expr *>(result);
-    }
-
-    ASTBuilder::IntBase ASTBuilder::detectBase(std::string_view text) {
-        if (text.size() > 2 && text[0] == '0') {
-            switch (text[1]) {
+    ASTBuilder::IntBase ASTBuilder::detectBase(std::string_view Text) {
+        if (Text.size() > 2 && Text[0] == '0') {
+            switch (Text[1]) {
                 case 'b':
                 case 'B':
                     return IntBase::Bin;
@@ -219,19 +49,211 @@ namespace astra::ast {
         return IntBase::Dec;
     }
 
+    std::any ASTBuilder::visitFile(parser::AstraParser::FileContext *Ctx) {
+        auto *Result = AstCtx.create<Program>(support::SourceRange::rangeOf(Ctx));
 
-    std::any ASTBuilder::visitLiteral(parser::AstraParser::LiteralContext *ctx) {
-        auto text = ctx->getText();
-        auto base = detectBase(text);
-
-        auto *begin = text.data();
-        auto *end = begin + text.size();
-        if (base != IntBase::Dec) {
-            begin += 2; // skip prefix
+        for (auto *ObjCtx: Ctx->topLevelObject()) {
+            Result->Objects.emplace_back(std::any_cast<TopLevelObject *>(visit(ObjCtx)));
         }
 
-        uint64_t value;
-        auto [ptr, ec] = std::from_chars(begin, end, value, static_cast<int>(base));
+        return Result;
+    }
+
+    std::any ASTBuilder::visitTopLevelObject(parser::AstraParser::TopLevelObjectContext *Ctx) {
+        // TODO
+        auto *Result = AstCtx.create<TopLevelObject>(support::SourceRange::rangeOf(Ctx));
+        Result->Statement = std::any_cast<Stmt *>(visit(Ctx->statement()));
+        return Result;
+    }
+
+    std::any ASTBuilder::visitStatement(parser::AstraParser::StatementContext *Ctx) {
+        if (Ctx->blockStmt()) {
+            return visit(Ctx->blockStmt());
+        }
+        if (Ctx->ifStmt()) {
+            return visit(Ctx->ifStmt());
+        }
+        if (Ctx->exprStmt()) {
+            return visit(Ctx->exprStmt());
+        }
+        if (Ctx->returnStmt()) {
+            return visit(Ctx->returnStmt());
+        }
+
+        assert(false && "Unknown statement type");
+    }
+
+    std::any ASTBuilder::visitBlockStmt(parser::AstraParser::BlockStmtContext *Ctx) {
+        auto *Result = AstCtx.create<BlockStmt>(support::SourceRange::rangeOf(Ctx));
+
+        for (auto *StmtCtx: Ctx->statement()) {
+            Result->Statements.emplace_back(std::any_cast<Stmt *>(visit(StmtCtx)));
+        }
+
+        return static_cast<Stmt *>(Result);
+    }
+
+    std::any ASTBuilder::visitIfStmt(parser::AstraParser::IfStmtContext *Ctx) {
+        Stmt *ElseStmt = nullptr;
+        if (Ctx->statement().size() > 1) {
+            ElseStmt = std::any_cast<Stmt *>(visit(Ctx->statement(1)));
+        }
+
+        auto *Result = AstCtx.create<IfStmt>(support::SourceRange::rangeOf(Ctx));
+        Result->Condition = std::any_cast<Expr *>(visit(Ctx->expression()));
+        Result->ThenBranch = std::any_cast<Stmt *>(visit(Ctx->statement(0)));
+        Result->ElseBranch = ElseStmt;
+        return static_cast<Stmt *>(Result);
+    }
+
+    std::any ASTBuilder::visitExprStmt(parser::AstraParser::ExprStmtContext *Ctx) {
+        auto *Result = AstCtx.create<ExprStmt>(support::SourceRange::rangeOf(Ctx));
+        Result->Expression = std::any_cast<Expr *>(visit(Ctx->expression()));
+        return static_cast<Stmt *>(Result);
+    }
+
+    std::any ASTBuilder::visitReturnStmt(parser::AstraParser::ReturnStmtContext *Ctx) {
+        Expr *ReturnValue = nullptr;
+        if (Ctx->expression()) {
+            ReturnValue = std::any_cast<Expr *>(visit(Ctx->expression()));
+        }
+
+        auto *Result = AstCtx.create<ReturnStmt>(support::SourceRange::rangeOf(Ctx));
+        Result->Expression = ReturnValue;
+        return static_cast<Stmt *>(Result);
+    }
+
+    std::any ASTBuilder::visitExpression(parser::AstraParser::ExpressionContext *Ctx) {
+        return visit(Ctx->disjunction());
+    }
+
+    std::any ASTBuilder::visitDisjunction(parser::AstraParser::DisjunctionContext *Ctx) {
+        return buildBinaryExpr(
+            support::SourceRange::rangeOf(Ctx),
+            Ctx->conjunction(),
+            std::vector{Ctx->DISJ()},
+            [](antlr4::tree::TerminalNode *) { return Op::Disj; }
+        );
+    }
+
+    std::any ASTBuilder::visitConjunction(parser::AstraParser::ConjunctionContext *Ctx) {
+        return buildBinaryExpr(
+            support::SourceRange::rangeOf(Ctx),
+            Ctx->equality(),
+            std::vector{Ctx->CONJ()},
+            [](antlr4::tree::TerminalNode *) { return Op::Conj; }
+        );
+    }
+
+    std::any ASTBuilder::visitEquality(parser::AstraParser::EqualityContext *Ctx) {
+        return buildBinaryExpr(
+            support::SourceRange::rangeOf(Ctx),
+            Ctx->comparison(),
+            std::vector{Ctx->equalityOperator()},
+            [](parser::AstraParser::EqualityOperatorContext *Ctx) {
+                if (Ctx->EQ()) {
+                    return Op::Eq;
+                }
+                return Op::Neq;
+            }
+        );
+    }
+
+    std::any ASTBuilder::visitComparison(parser::AstraParser::ComparisonContext *Ctx) {
+        return buildBinaryExpr(
+            support::SourceRange::rangeOf(Ctx),
+            Ctx->addition(),
+            std::vector{Ctx->comparisonOperator()},
+            [](parser::AstraParser::ComparisonOperatorContext *Ctx) {
+                if (Ctx->LT()) {
+                    return Op::Lt;
+                }
+                if (Ctx->LE()) {
+                    return Op::Le;
+                }
+                if (Ctx->GT()) {
+                    return Op::Gt;
+                }
+                return Op::Ge;
+            }
+        );
+    }
+
+    std::any ASTBuilder::visitAddition(parser::AstraParser::AdditionContext *Ctx) {
+        return buildBinaryExpr(
+            support::SourceRange::rangeOf(Ctx),
+            Ctx->multiplication(),
+            Ctx->additionOperator(),
+            [](parser::AstraParser::AdditionOperatorContext *Ctx) {
+                if (Ctx->ADD()) {
+                    return Op::Add;
+                }
+                return Op::Sub;
+            }
+        );
+    }
+
+    std::any ASTBuilder::visitMultiplication(parser::AstraParser::MultiplicationContext *Ctx) {
+        return buildBinaryExpr(
+            support::SourceRange::rangeOf(Ctx),
+            Ctx->unaryExpr(),
+            Ctx->multiplicationOperator(),
+            [](parser::AstraParser::MultiplicationOperatorContext *Ctx) {
+                if (Ctx->MULT()) {
+                    return Op::Mult;
+                }
+                if (Ctx->DIV()) {
+                    return Op::Div;
+                }
+                return Op::Mod;
+            }
+        );
+    }
+
+    std::any ASTBuilder::visitUnaryExpr(parser::AstraParser::UnaryExprContext *Ctx) {
+        if (!Ctx->unaryOperator().size()) {
+            return visit(Ctx->primaryExpr());
+        }
+
+        auto *Result = std::any_cast<Expr *>(visit(Ctx->primaryExpr()));
+        const auto Getter = [](parser::AstraParser::UnaryOperatorContext *Ctx) {
+            if (Ctx->ADD()) {
+                return Op::Add;
+            }
+            return Op::Sub;
+        };
+        const auto &Ops = Ctx->unaryOperator();
+        for (auto It = Ops.rbegin(); It != Ops.rend(); ++It) {
+            auto *Temp = AstCtx.create<UnaryExpr>(support::SourceRange::rangeOf(Ctx));
+            Temp->Operator = Getter(*It);
+            Temp->Operand = Result;
+            Result = Temp;
+        }
+        return static_cast<Expr *>(Result);
+    }
+
+    std::any ASTBuilder::visitParenExpr(parser::AstraParser::ParenExprContext *Ctx) {
+        return visit(Ctx->expression());
+    }
+
+    std::any ASTBuilder::visitVariable(parser::AstraParser::VariableContext *Ctx) {
+        auto *Result = AstCtx.create<VarExpr>(support::SourceRange::rangeOf(Ctx));
+        Result->Name = AstCtx.getIdentifier(Ctx->getText());
+        return static_cast<Expr *>(Result);
+    }
+
+    std::any ASTBuilder::visitLiteral(parser::AstraParser::LiteralContext *Ctx) {
+        auto Text = Ctx->getText();
+        auto Base = detectBase(Text);
+
+        auto *Begin = Text.data();
+        auto *End = Begin + Text.size();
+        if (Base != IntBase::Dec) {
+            Begin += 2; // skip prefix
+        }
+
+        uint64_t Value;
+        auto [ptr, ec] = std::from_chars(Begin, End, Value, static_cast<int>(Base));
 
         if (ec == std::errc::result_out_of_range) {
             // TODO: handle error: overflow
@@ -239,28 +261,8 @@ namespace astra::ast {
             // TODO: handle error: invalid format
         }
 
-        auto *result = astCtx.create<LiteralExpr>(support::SourceRange::rangeOf(ctx));
-        result->value = value;
-        return static_cast<Expr *>(result);
+        auto *Result = AstCtx.create<LiteralExpr>(support::SourceRange::rangeOf(Ctx));
+        Result->Value = Value;
+        return static_cast<Expr *>(Result);
     }
-
-    template<typename SubCtx, typename CtxOp, typename Getter>
-    std::any ASTBuilder::buildBinaryExpr(support::SourceRange range, const std::vector<SubCtx> &subs,
-                                         const std::vector<CtxOp> &ops,
-                                         Getter getter) {
-        if (subs.size() == 1) {
-            return visit(subs[0]);
-        }
-
-        auto *result = std::any_cast<Expr *>(visit(subs[0]));
-        for (size_t i = 1; i < subs.size(); ++i) {
-            auto *temp = astCtx.create<BinaryExpr>(range);
-            temp->op = getter(ops[i - 1]);
-            temp->lhs = result;
-            temp->rhs = std::any_cast<Expr *>(visit(subs[i]));
-            result = temp;
-        }
-
-        return result;
-    }
-}
+} // namespace astra::ast

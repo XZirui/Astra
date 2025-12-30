@@ -5,27 +5,27 @@
 namespace astra::ast {
     // TODO: support For FileID management
     ASTContext::ASTContext() {
-        intType = create<BuiltinType>(BuiltinType::BuiltinKind::Int);
+        IntType = create<BuiltinType>(BuiltinType::BuiltinTypeKind::Int);
     }
 
-    Identifier *ASTContext::getIdentifier(std::string_view name) {
-        auto it = identifiers.find(std::string(name));
-        if (it != identifiers.end()) {
-            return it->second;
+    Identifier *ASTContext::getIdentifier(std::string_view Name) {
+        auto It = Identifiers.find(std::string(Name));
+        if (It != Identifiers.end()) {
+            return It->second;
         }
 
         // Not found, create a new Identifier
-        auto storage = static_cast<char *>(
-            allocator.allocate(name.size(), alignof(char))
+        auto *Storage = static_cast<char *>(
+            Allocator.allocate(Name.size(), alignof(char))
         );
 
-        std::memcpy(storage, name.data(), name.size());
+        std::memcpy(Storage, Name.data(), Name.size());
 
-        std::string_view interned(storage, name.size());
-        auto *identifier = create<Identifier>(interned);
+        std::string_view Interned(Storage, Name.size());
+        auto *Id = create<Identifier>(Interned);
 
-        identifiers.emplace(interned, identifier);
-        return identifier;
+        Identifiers.emplace(Interned, Id);
+        return Id;
     }
 
-}
+} // namespace astra::ast

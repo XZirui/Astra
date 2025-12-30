@@ -8,17 +8,17 @@ namespace astra::ast {
     };
 
     struct Type {
-        TypeKind kind;
-        explicit Type(TypeKind k) : kind(k) {}
+        TypeKind Kind;
+        explicit Type(TypeKind K) : Kind(K) {}
     };
 
     struct BuiltinType : Type {
-        enum class BuiltinKind {
+        enum class BuiltinTypeKind {
             Int, // TODO
         };
 
-        BuiltinKind builtinKind;
+        BuiltinTypeKind BuiltinKind;
 
-        explicit BuiltinType(BuiltinKind k) : Type(TypeKind::Builtin), builtinKind(k) {}
+        explicit BuiltinType(BuiltinTypeKind K) : Type(TypeKind::Builtin), BuiltinKind(K) {}
     };
-};
+} // namespace astra::ast

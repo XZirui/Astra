@@ -11,10 +11,10 @@ namespace astra::ast {
 
     enum class NodeKind {
 #include "ExprNodes.def"
-#include "StmtNodes.def"
 #include "ProgramNodes.def"
+#include "StmtNodes.def"
     };
 
 #include "macros/NodeMacrosUndef.hpp"
 
-}
+} // namespace astra::ast

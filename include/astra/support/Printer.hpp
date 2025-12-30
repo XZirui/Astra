@@ -5,23 +5,23 @@
 namespace astra::support {
     class Printer {
     public:
-        explicit Printer(std::ostream &out);
+        explicit Printer(std::ostream &Out);
 
-        void push(int amount = 2);
-        void pop(int amount = 2);
+        void push(int Amount = 2);
+        void pop(int Amount = 2);
 
-        void print(std::string_view str) const;
+        void print(std::string_view Str) const;
 
         template<typename... Args>
-        void print(fmt::format_string<Args...> fmt, Args &&... args) {
+        void print(fmt::format_string<Args...> Fmt, Args &&... Arguments) {
             printIndent();
-            out << fmt::format(fmt, std::forward<Args>(args)...);
+            Out << fmt::format(Fmt, std::forward<Args>(Arguments)...);
         }
 
     private:
-        std::ostream &out;
-        int indentLevel = 0;
+        std::ostream &Out;
+        int IndentLevel = 0;
 
         void printIndent() const;
     };
-}
+} // namespace astra::support

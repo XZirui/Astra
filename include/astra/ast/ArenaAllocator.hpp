@@ -4,55 +4,55 @@
 namespace astra::ast {
     class ArenaAllocator {
         struct Block {
-            char *data{};
-            size_t size{};
-            size_t offset{};
-            Block *next{};
+            char *Data{};
+            size_t Size{};
+            size_t Offset{};
+            Block *Next{};
         };
 
-        Block *head;
-        size_t blockSize{};
+        Block *Head;
+        size_t BlockSize{};
 
-        static size_t alignUp(size_t size, size_t align) {
-            return (size + align - 1) & ~(align - 1);
+        static size_t alignUp(size_t Size, size_t Align) {
+            return (Size + Align - 1) & ~(Align - 1);
         }
 
-        static bool hasSpace(Block *block, size_t size, size_t align) {
-            size_t alignedOffset = alignUp(block->offset, align);
-            return alignedOffset + size <= block->size;
+        static bool hasSpace(const Block *TargetBlock, size_t Size, size_t Align) {
+            size_t AlignedOffset = alignUp(TargetBlock->Offset, Align);
+            return AlignedOffset + Size <= TargetBlock->Size;
         }
 
-        Block *allocateBlock(size_t minSize) const {
-            auto* block = new Block;
-            block->size = minSize;
-            block->data = static_cast<char *>(std::malloc(block->size));
-            block->offset = 0;
-            block->next = head;
-            return block;
+        Block *allocateBlock(size_t MinSize) const {
+            auto* NewBlock = new Block;
+            NewBlock->Size = MinSize;
+            NewBlock->Data = static_cast<char *>(std::malloc(NewBlock->Size));
+            NewBlock->Offset = 0;
+            NewBlock->Next = Head;
+            return NewBlock;
         }
 
     public:
-        explicit ArenaAllocator(size_t blocks = 4096) : head(nullptr), blockSize(blocks) {};
+        explicit ArenaAllocator(size_t Blocks = 4096) : Head(nullptr), BlockSize(Blocks) {};
 
-        void *allocate(size_t size, size_t align) {
-            if (!head || !hasSpace(head, size, align)) {
-                head = allocateBlock(size > blockSize ? size : blockSize);
+        void *allocate(size_t Size, size_t Align) {
+            if (!Head || !hasSpace(Head, Size, Align)) {
+                Head = allocateBlock(Size > BlockSize ? Size : BlockSize);
             }
 
-            size_t alignedOffset = alignUp(head->offset, align);
-            void *ptr = head->data + alignedOffset;
-            head->offset = alignedOffset + size;
-            return ptr;
+            size_t AlignedOffset = alignUp(Head->Offset, Align);
+            void *Ptr = Head->Data + AlignedOffset;
+            Head->Offset = AlignedOffset + Size;
+            return Ptr;
         }
 
         ~ArenaAllocator() {
-            Block *current = head;
-            while (current) {
-                Block *next = current->next;
-                std::free(current->data);
-                delete current;
-                current = next;
+            Block *Current = Head;
+            while (Current) {
+                Block *Next = Current->Next;
+                std::free(Current->Data);
+                delete Current;
+                Current = Next;
             }
         }
     };
-}
+} // namespace astra::ast

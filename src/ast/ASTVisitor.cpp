@@ -2,4 +2,4 @@
 
 namespace astra::ast {
 
-}
+} // namespace astra::ast

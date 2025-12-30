@@ -8,6 +8,7 @@ project(
 # Global C++ settings
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Options
 option(BUILD_TOOLS "Build tools" ON)
@@ -59,3 +60,9 @@ endif ()
 if (BUILD_TESTS)
     add_subdirectory(tests)
 endif ()
+
+add_custom_target(
+        format
+        COMMAND clang-format -i ${PROJECT_SOURCE_DIR}/src/*.cpp ${PROJECT_SOURCE_DIR}/include/*.hpp ${PROJECT_SOURCE_DIR}/tools/*.cpp
+        COMMENT "Running clang-format on source files"
+)

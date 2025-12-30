@@ -33,4 +33,4 @@ namespace astra::ast {
 #undef PTR
 #undef DISPATCH
 #include "macros/NodeMacrosUndef.hpp"
-}
+} // namespace astra::ast

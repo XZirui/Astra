@@ -7,22 +7,22 @@
 
 namespace astra::ast {
     struct Identifier {
-        explicit Identifier(std::string_view s) : name(s) {
+        explicit Identifier(std::string_view S) : Name(S) {
         }
 
-        [[nodiscard]] std::string_view getName() const { return name; }
+        [[nodiscard]] std::string_view getName() const { return Name; }
 
     private:
-        std::string_view name;
+        std::string_view Name;
     };
 
     struct ASTNode {
-        support::SourceRange range;
+        support::SourceRange Range;
 
-        explicit ASTNode(const support::SourceRange &r) : range(r) {
+        explicit ASTNode(const support::SourceRange &R) : Range(R) {
         }
 
         virtual ~ASTNode() = default;
         [[nodiscard]] virtual NodeKind getKind() const = 0;
     };
-}
+} // namespace astra::ast

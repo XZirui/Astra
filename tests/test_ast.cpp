@@ -5,7 +5,7 @@
 
 // TODO
 TEST_CASE("Literal stores correct value", "[ast][expr]") {
-    astra::ast::LiteralExpr literal;
+    astra::ast::LiteralExpr literal{};
     literal.value = 42;
     REQUIRE(literal.value == 42);
 }

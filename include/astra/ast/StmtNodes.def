@@ -4,22 +4,22 @@ ABSTRACT_NODE(Stmt, ASTNode)
 
 // statement : blockStmt
 NODE(BlockStmt, Stmt,
-     ATTR_LIST(Stmt *, statements)
+     ATTR_LIST(Stmt *, Statements)
 )
 
 // statement : exprStmt
 NODE(ExprStmt, Stmt,
-    ATTR(Expr *, expr)
+    ATTR(Expr *, Expression)
 )
 
 // statement : ifStmt
 NODE(IfStmt, Stmt,
-    ATTR(Expr *, condition)
-    ATTR(Stmt *, thenBranch)
-    ATTR(Stmt *, elseBranch) // optional
+    ATTR(Expr *, Condition)
+    ATTR(Stmt *, ThenBranch)
+    ATTR(Stmt *, ElseBranch) // optional
 )
 
 // statement : returnStmt
 NODE(ReturnStmt, Stmt,
-    ATTR(Expr *, expr)
+    ATTR(Expr *, Expression)
 )

@@ -3,126 +3,126 @@
 
 template<>
 struct fmt::formatter<astra::ast::Op> {
-    constexpr auto parse(format_parse_context &ctx) { return ctx.begin(); }
+    constexpr auto parse(format_parse_context &Ctx) { return Ctx.begin(); }
 
-    template <typename FormatContext>
-    auto format(const astra::ast::Op &op, FormatContext &ctx) {
-        switch (op) {
-            using astra::ast::Op;
-            case Op::Add: return fmt::format_to(ctx.out(), "+");
-            case Op::Sub: return fmt::format_to(ctx.out(), "-");
-            case Op::Mult: return fmt::format_to(ctx.out(), "*");
-            case Op::Div: return fmt::format_to(ctx.out(), "/");
-            case Op::Mod: return fmt::format_to(ctx.out(), "%");
-            case Op::Eq: return fmt::format_to(ctx.out(), "==");
-            case Op::Neq: return fmt::format_to(ctx.out(), "!=");
-            case Op::Lt: return fmt::format_to(ctx.out(), "<");
-            case Op::Gt: return fmt::format_to(ctx.out(), ">");
-            case Op::Le: return fmt::format_to(ctx.out(), "<=");
-            case Op::Ge: return fmt::format_to(ctx.out(), ">=");
-            case Op::Disj: return fmt::format_to(ctx.out(), "||");
-            case Op::Conj: return fmt::format_to(ctx.out(), "&&");
-            default: return fmt::format_to(ctx.out(), "UnknownOp");
+    template<typename FormatContext>
+    auto format(const astra::ast::Op &Operator, FormatContext &Ctx) {
+        switch (Operator) {
+                using enum astra::ast::Op;
+            case Add: return fmt::format_to(Ctx.out(), "+");
+            case Sub: return fmt::format_to(Ctx.out(), "-");
+            case Mult: return fmt::format_to(Ctx.out(), "*");
+            case Div: return fmt::format_to(Ctx.out(), "/");
+            case Mod: return fmt::format_to(Ctx.out(), "%");
+            case Eq: return fmt::format_to(Ctx.out(), "==");
+            case Neq: return fmt::format_to(Ctx.out(), "!=");
+            case Lt: return fmt::format_to(Ctx.out(), "<");
+            case Gt: return fmt::format_to(Ctx.out(), ">");
+            case Le: return fmt::format_to(Ctx.out(), "<=");
+            case Ge: return fmt::format_to(Ctx.out(), ">=");
+            case Disj: return fmt::format_to(Ctx.out(), "||");
+            case Conj: return fmt::format_to(Ctx.out(), "&&");
+            default: return fmt::format_to(Ctx.out(), "UnknownOp");
         }
     }
 };
 
 namespace astra::ast {
-    ASTDumper::ASTDumper(support::Printer &out) : out(out) {
+    ASTDumper::ASTDumper(support::Printer &Out) : Out(Out) {
     }
 
-    void ASTDumper::dump(const Program *program) {
-        out.print("AST Dump:\n");
+    void ASTDumper::dump(const Program *Program) {
+        Out.print("AST Dump:\n");
 
-        visit(program);
+        visit(Program);
     }
 
-    void ASTDumper::visitProgram(const Program *program) {
-        out.print("Program {}:\n", program->range);
-        out.push();
-        for (const auto top_level_object: program->objects) {
-            visit(top_level_object);
+    void ASTDumper::visitProgram(const Program *Program) {
+        Out.print("Program {}:\n", Program->Range);
+        Out.push();
+        for (auto *const Object: Program->Objects) {
+            visit(Object);
         }
-        out.pop();
+        Out.pop();
     }
 
-    void ASTDumper::visitTopLevelObject(const TopLevelObject *top_level_object) {
-        visit(top_level_object->stmt);
+    void ASTDumper::visitTopLevelObject(const TopLevelObject *TopLevelObject) {
+        visit(TopLevelObject->Statement);
     }
 
-    void ASTDumper::visitBlockStmt(const BlockStmt *block_stmt) {
-        out.print("BlockStmt {}:\n", block_stmt->range);
-        out.push();
-        for (const auto s: block_stmt->statements) {
-            visit(s);
+    void ASTDumper::visitBlockStmt(const BlockStmt *BlockStmt) {
+        Out.print("BlockStmt {}:\n", BlockStmt->Range);
+        Out.push();
+        for (auto *const Stmt: BlockStmt->Statements) {
+            visit(Stmt);
         }
-        out.pop();
+        Out.pop();
     }
 
-    void ASTDumper::visitIfStmt(const IfStmt *if_stmt) {
-        out.print("IfStmt {}:\n", if_stmt->range);
-        out.push();
-        out.print("Condition:\n");
-        visit(if_stmt->condition);
-        out.print("Then:\n");
-        visit(if_stmt->thenBranch);
-        if (if_stmt->elseBranch) {
-            out.print("Else:\n");
-            visit(if_stmt->elseBranch);
+    void ASTDumper::visitIfStmt(const IfStmt *IfStmt) {
+        Out.print("IfStmt {}:\n", IfStmt->Range);
+        Out.push();
+        Out.print("Condition:\n");
+        visit(IfStmt->Condition);
+        Out.print("Then:\n");
+        visit(IfStmt->ThenBranch);
+        if (IfStmt->ElseBranch) {
+            Out.print("Else:\n");
+            visit(IfStmt->ElseBranch);
         }
-        out.pop();
+        Out.pop();
     }
 
-    void ASTDumper::visitExprStmt(const ExprStmt *expr_stmt) {
-        out.print("ExprStmt {}:\n", expr_stmt->range);
-        out.push();
-        visit(expr_stmt->expr);
-        out.pop();
+    void ASTDumper::visitExprStmt(const ExprStmt *ExprStmt) {
+        Out.print("ExprStmt {}:\n", ExprStmt->Range);
+        Out.push();
+        visit(ExprStmt->Expression);
+        Out.pop();
     }
 
-    void ASTDumper::visitReturnStmt(const ReturnStmt *return_stmt) {
-        out.print("ReturnStmt {}:\n", return_stmt->range);
-        out.push();
-        if (return_stmt->expr) {
-            visit(return_stmt->expr);
+    void ASTDumper::visitReturnStmt(const ReturnStmt *ReturnStmt) {
+        Out.print("ReturnStmt {}:\n", ReturnStmt->Range);
+        Out.push();
+        if (ReturnStmt->Expression) {
+            visit(ReturnStmt->Expression);
         }
-        out.pop();
+        Out.pop();
     }
 
-    void ASTDumper::visitLiteralExpr(const LiteralExpr *literal_expr) {
-        out.print("LiteralExpr {}:\n", literal_expr->range);
-        out.push();
-        out.print("Value={}\n", literal_expr->value);
-        out.pop();
+    void ASTDumper::visitLiteralExpr(const LiteralExpr *LiteralExpr) {
+        Out.print("LiteralExpr {}:\n", LiteralExpr->Range);
+        Out.push();
+        Out.print("Value={}\n", LiteralExpr->Value);
+        Out.pop();
     }
 
-    void ASTDumper::visitVarExpr(const VarExpr *var_expr) {
-        out.print("VarExpr {}:\n", var_expr->range);
-        out.push();
-        out.print("Name={}\n", var_expr->name->getName());
-        out.pop();
+    void ASTDumper::visitVarExpr(const VarExpr *VarExpr) {
+        Out.print("VarExpr {}:\n", VarExpr->Range);
+        Out.push();
+        Out.print("Name={}\n", VarExpr->Name->getName());
+        Out.pop();
     }
 
-    void ASTDumper::visitUnaryExpr(const UnaryExpr *unary_expr) {
-        out.print("UnaryExpr {}:\n", unary_expr->range);
-        out.push();
-        out.print("Op: {}\n", unary_expr->op);
-        visit(unary_expr->operand);
-        out.pop();
+    void ASTDumper::visitUnaryExpr(const UnaryExpr *UnaryExpr) {
+        Out.print("UnaryExpr {}:\n", UnaryExpr->Range);
+        Out.push();
+        Out.print("Op: {}\n", UnaryExpr->Operator);
+        visit(UnaryExpr->Operand);
+        Out.pop();
     }
 
-    void ASTDumper::visitBinaryExpr(const BinaryExpr *binary_expr) {
-        out.print("BinaryExpr {}:\n", binary_expr->range);
-        out.push();
-        out.print("Op: {}\n", binary_expr->op);
-        out.print("LHS:\n");
-        out.push();
-        visit(binary_expr->lhs);
-        out.pop();
-        out.print("RHS:\n");
-        out.push();
-        visit(binary_expr->rhs);
-        out.pop();
-        out.pop();
+    void ASTDumper::visitBinaryExpr(const BinaryExpr *BinaryExpr) {
+        Out.print("BinaryExpr {}:\n", BinaryExpr->Range);
+        Out.push();
+        Out.print("Op: {}\n", BinaryExpr->Operator);
+        Out.print("LHS:\n");
+        Out.push();
+        visit(BinaryExpr->LHS);
+        Out.pop();
+        Out.print("RHS:\n");
+        Out.push();
+        visit(BinaryExpr->RHS);
+        Out.pop();
+        Out.pop();
     }
-}
+} // namespace astra::ast

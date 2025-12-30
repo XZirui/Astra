@@ -1,21 +1,21 @@
 #include "astra/support/Printer.hpp"
 
 namespace astra::support {
-    Printer::Printer(std::ostream &out) : out(out) {
+    Printer::Printer(std::ostream &Out) : Out(Out) {
     }
 
-    void Printer::push(int amount) { indentLevel += amount; }
+    void Printer::push(int Amount) { IndentLevel += Amount; }
 
-    void Printer::pop(int amount) { indentLevel -= amount; }
+    void Printer::pop(int Amount) { IndentLevel -= Amount; }
 
-    void Printer::print(std::string_view str) const {
+    void Printer::print(std::string_view Str) const {
         printIndent();
-        out << str;
+        Out << Str;
     }
 
     void Printer::printIndent() const {
-        for (int indent = 0; indent < indentLevel; ++indent) {
-            out << " ";
+        for (int Indent = 0; Indent < IndentLevel; ++Indent) {
+            Out << " ";
         }
     }
-}
+} // namespace astra::support
