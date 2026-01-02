@@ -19,6 +19,12 @@ NODE(IfStmt, Stmt,
     ATTR(Stmt *, ElseBranch) // optional
 )
 
+// statement : breakStmt
+NODE(BreakStmt, Stmt, )
+
+// statement : continueStmt
+NODE(ContinueStmt, Stmt, )
+
 // statement : returnStmt
 NODE(ReturnStmt, Stmt,
     ATTR(Expr *, Expression)

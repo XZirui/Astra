@@ -10,7 +10,7 @@ namespace astra::ast {
         explicit Identifier(std::string_view S) : Name(S) {
         }
 
-        [[nodiscard]] std::string_view getName() const { return Name; }
+        [[nodiscard]] std::string_view GetName() const { return Name; }
 
     private:
         std::string_view Name;

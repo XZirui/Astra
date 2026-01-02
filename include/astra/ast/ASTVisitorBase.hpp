@@ -16,7 +16,7 @@ namespace astra::ast {
             switch (D->getKind()) {
 #define ATTR(TYPE, NAME)
 #define ATTR_LIST(TYPE, NAME)
-#define ABSTRACT_NODE(NAME, BASE)
+#define ABSTRACT_NODE(NAME, BASE, ...)
 #define NODE(NAME, BASE, FIELD) \
                 case NodeKind::NAME: DISPATCH(NAME, NAME);
 #include "AllNodes.def"

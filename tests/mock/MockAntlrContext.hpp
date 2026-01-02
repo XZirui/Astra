@@ -4,22 +4,24 @@
 
 namespace astra::test::mock {
     struct MockToken {
-        size_t line{1};
-        size_t column{0};
-        size_t start{0};
-        size_t stop{0};
+        size_t Line{1};
+        size_t Column{0};
+        size_t Start{0};
+        size_t Stop{0};
+        std::string Text;
 
-        size_t getLine() const { return line; }
-        size_t getCharPositionInLine() const { return column; }
-        size_t getStartIndex() const { return start; }
-        size_t getStopIndex() const { return stop; }
+        size_t getLine() const { return Line; }
+        size_t getCharPositionInLine() const { return Column; }
+        size_t getStartIndex() const { return Start; }
+        size_t getStopIndex() const { return Stop; }
+        std::string getText() const { return Text; }
     };
 
     struct MockParserRuleContext {
-        MockToken start_token;
-        MockToken stop_token;
+        MockToken StartToken;
+        MockToken StopToken;
 
-        MockToken* getStart() { return &start_token; }
-        MockToken* getStop() { return &stop_token; }
+        MockToken* getStart() { return &StartToken; }
+        MockToken* getStop() { return &StopToken; }
     };
 };

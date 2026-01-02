@@ -1,10 +1,25 @@
 // ReSharper disable once CppMissingIncludeGuard
 
 ABSTRACT_NODE(Expr, ASTNode)
+ABSTRACT_NODE(LiteralExpr, Expr)
 
 // primaryExpr : INTEGER_LITERAL
-NODE(LiteralExpr, Expr,
+NODE(IntLiteral, LiteralExpr,
     ATTR(uint64_t, Value = 0)
+)
+
+// primaryExpr : BOOLEAN_LITERAL
+NODE(BoolLiteral, LiteralExpr,
+    ATTR(bool, Value = false)
+)
+
+// primaryExpr : NULL_LITERAL
+NODE(NullLiteral, LiteralExpr, )
+
+// primaryExpr : FLOAT_LITERAL | DOUBLE_LITERAL
+NODE(FloatingLiteral, LiteralExpr,
+    ATTR(FloatType, FloatKind)
+    ATTR(double, Value = 0.0)
 )
 
 // primaryExpr : IDENTIFIER

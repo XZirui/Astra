@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "astra/support/SourceRange.hpp"
+#include "mock/MockAntlrContext.hpp"
 
 TEST_CASE("SourceLocation - basic properties", "[support][SourceRange]") {
     astra::support::SourceLocation Loc;
@@ -51,5 +52,18 @@ TEST_CASE("SourceRange - construction", "[support][SourceRange]") {
 }
 
 TEST_CASE("SourceRange - rangeOf", "[support][SourceRange]") {
+    astra::test::mock::MockParserRuleContext Ctx;
+    Ctx.StartToken.Line = 2;
+    Ctx.StartToken.Column = 4;
+    Ctx.StopToken.Line = 5;
+    Ctx.StopToken.Column = 8;
+    Ctx.StopToken.Text = "example";
 
+    astra::support::SourceRange Range = astra::support::SourceRange::rangeOf(&Ctx, 7);
+
+    REQUIRE(Range.Begin.Line == 2);
+    REQUIRE(Range.Begin.Column == 5); // +1 adjustment
+    REQUIRE(Range.End.Line == 5);
+    REQUIRE(Range.End.Column == 16); // 8 + len("example") + 1
+    REQUIRE(Range.File == 7);
 }

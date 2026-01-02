@@ -23,12 +23,18 @@ namespace astra::ast {
 
         std::any visitFile(parser::AstraParser::FileContext *Ctx) override;
         std::any visitTopLevelObject(parser::AstraParser::TopLevelObjectContext *Ctx) override;
+        std::any visitDeclaration(parser::AstraParser::DeclarationContext *Ctx) override;
+        std::any visitFunctionDecl(parser::AstraParser::FunctionDeclContext *Ctx) override;
+        std::any visitParamList(parser::AstraParser::ParamListContext *Ctx) override;
+        std::any visitParameter(parser::AstraParser::ParameterContext *Ctx) override;
+        std::any visitType(parser::AstraParser::TypeContext *Ctx) override;
         std::any visitStatement(parser::AstraParser::StatementContext *Ctx) override;
         std::any visitBlockStmt(parser::AstraParser::BlockStmtContext *Ctx) override;
         std::any visitIfStmt(parser::AstraParser::IfStmtContext *Ctx) override;
         std::any visitExprStmt(parser::AstraParser::ExprStmtContext *Ctx) override;
         std::any visitReturnStmt(parser::AstraParser::ReturnStmtContext *Ctx) override;
-
+        std::any visitBreakStmt(parser::AstraParser::BreakStmtContext *Ctx) override;
+        std::any visitContinueStmt(parser::AstraParser::ContinueStmtContext *Ctx) override;
         std::any visitExpression(parser::AstraParser::ExpressionContext *Ctx) override;
         std::any visitDisjunction(parser::AstraParser::DisjunctionContext *Ctx) override;
         std::any visitConjunction(parser::AstraParser::ConjunctionContext *Ctx) override;
@@ -38,7 +44,11 @@ namespace astra::ast {
         std::any visitMultiplication(parser::AstraParser::MultiplicationContext *Ctx) override;
         std::any visitUnaryExpr(parser::AstraParser::UnaryExprContext *Ctx) override;
         std::any visitParenExpr(parser::AstraParser::ParenExprContext *Ctx) override;
-        std::any visitLiteral(parser::AstraParser::LiteralContext *Ctx) override;
+        std::any visitIntLiteral(parser::AstraParser::IntLiteralContext *Ctx) override;
+        std::any visitBoolLiteral(parser::AstraParser::BoolLiteralContext *Ctx) override;
+        std::any visitNullLiteral(parser::AstraParser::NullLiteralContext *Ctx) override;
+        std::any visitFloatLiteral(parser::AstraParser::FloatLiteralContext *Ctx) override;
+        std::any visitDoubleLiteral(parser::AstraParser::DoubleLiteralContext *Ctx) override;
         std::any visitVariable(parser::AstraParser::VariableContext *Ctx) override;
         // TODO
     };

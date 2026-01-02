@@ -67,6 +67,18 @@ PUBLIC : 'public';
 PRIVATE : 'private';
 PROTECTED : 'protected';
 
+//
+// Logical Literals
+//
+
+BOOLEAN_LITERAL:
+    'true' | 'false'
+;
+
+NULL_LITERAL:
+    'null'
+;
+
 
 //
 // Integer Literals
@@ -78,6 +90,23 @@ INTEGER_LITERAL:
     | OCT_INTEGER_LITERAL
     | BIN_INTEGER_LITERAL
 ;
+
+
+//
+// Floating Point Literals
+//
+
+FLOAT_LITERAL:
+    DOUBLE_LITERAL [fF]
+    | INTEGER_LITERAL [fF]
+;
+
+DOUBLE_LITERAL:
+    DEC_DIGIT+? DOT DEC_DIGIT+ DOUBLE_EXPONENT?
+    | DEC_DIGIT+ DOUBLE_EXPONENT
+;
+
+fragment DOUBLE_EXPONENT: [eE] [+-]? DEC_DIGIT+;
 
 
 // TODO: Separator

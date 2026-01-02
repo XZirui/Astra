@@ -2,11 +2,13 @@
 // No pragma once or include guard here!
 
 #define ATTR(TYPE, NAME) TYPE NAME;
-#define ATTR_LIST(TYPE, NAME) std::vector<TYPE> NAME;
+#define ATTR_LIST(TYPE, NAME) std::vector<TYPE> NAME{};
 
-#define ABSTRACT_NODE(NAME, BASE)   \
-struct NAME : BASE {                \
-    using BASE::BASE;               \
+#define ABSTRACT_NODE(NAME, BASE, ...)  \
+struct NAME : BASE {                    \
+    __VA_ARGS__                         \
+                                        \
+    using BASE::BASE;                   \
 };
 
 #define NODE(NAME, BASE, FIELDS)                                    \

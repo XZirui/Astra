@@ -2,7 +2,7 @@
 
 // topLevelObject
 NODE(TopLevelObject, ASTNode,
-    ATTR(Stmt *, Statement)
+    ATTR(Decl *, Declaration)
 )
 
 // file

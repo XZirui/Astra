@@ -27,6 +27,21 @@ struct fmt::formatter<astra::ast::Op> {
     }
 };
 
+template<>
+struct fmt::formatter<astra::ast::FloatType> {
+    constexpr auto parse(format_parse_context &Ctx) { return Ctx.begin(); }
+
+    template<typename FormatContext>
+    auto format(const astra::ast::FloatType &Kind, FormatContext &Ctx) {
+        switch (Kind) {
+                using enum astra::ast::FloatType;
+            case Float: return fmt::format_to(Ctx.out(), "float");
+            case Double: return fmt::format_to(Ctx.out(), "double");
+            default: return fmt::format_to(Ctx.out(), "UnknownFloatType");
+        }
+    }
+};
+
 namespace astra::ast {
     ASTDumper::ASTDumper(support::Printer &Out) : Out(Out) {
     }
@@ -47,7 +62,33 @@ namespace astra::ast {
     }
 
     void ASTDumper::visitTopLevelObject(const TopLevelObject *TopLevelObject) {
-        visit(TopLevelObject->Statement);
+        visit(TopLevelObject->Declaration);
+    }
+
+    void ASTDumper::visitFunctionDecl(const FunctionDecl *FunctionDecl) {
+        Out.print("FunctionDecl {}:\n", FunctionDecl->Range);
+        Out.push();
+        Out.print("Name={}\n", FunctionDecl->Name->GetName());
+        Out.print("Params:\n");
+        Out.push();
+        for (auto *const Param: FunctionDecl->Params) {
+            visit(Param);
+        }
+        Out.pop();
+        Out.print("ReturnType: {}\n", FunctionDecl->ReturnType->ToString());
+        Out.print("Body:\n");
+        Out.push();
+        visit(FunctionDecl->Body);
+        Out.pop();
+        Out.pop();
+    }
+
+    void ASTDumper::visitParamDecl(const ParamDecl *ParamDecl) {
+        Out.print("ParamDecl {}:\n", ParamDecl->Range);
+        Out.push();
+        Out.print("Name={}\n", ParamDecl->Name->GetName());
+        Out.print("Type={}\n", ParamDecl->ParamType->ToString());
+        Out.pop();
     }
 
     void ASTDumper::visitBlockStmt(const BlockStmt *BlockStmt) {
@@ -63,12 +104,18 @@ namespace astra::ast {
         Out.print("IfStmt {}:\n", IfStmt->Range);
         Out.push();
         Out.print("Condition:\n");
+        Out.push();
         visit(IfStmt->Condition);
+        Out.pop();
         Out.print("Then:\n");
+        Out.push();
         visit(IfStmt->ThenBranch);
+        Out.pop();
         if (IfStmt->ElseBranch) {
             Out.print("Else:\n");
+            Out.push();
             visit(IfStmt->ElseBranch);
+            Out.pop();
         }
         Out.pop();
     }
@@ -89,17 +136,44 @@ namespace astra::ast {
         Out.pop();
     }
 
-    void ASTDumper::visitLiteralExpr(const LiteralExpr *LiteralExpr) {
-        Out.print("LiteralExpr {}:\n", LiteralExpr->Range);
+    void ASTDumper::visitBreakStmt(const BreakStmt *BreakStmt) {
+        Out.print("BreakStmt {}\n", BreakStmt->Range);
+    }
+
+    void ASTDumper::visitContinueStmt(const ContinueStmt *ContinueStmt) {
+        Out.print("ContinueStmt {}\n", ContinueStmt->Range);
+    }
+
+    void ASTDumper::visitIntLiteral(const IntLiteral *IntLiteral) {
+        Out.print("IntLiteral {}:\n", IntLiteral->Range);
         Out.push();
-        Out.print("Value={}\n", LiteralExpr->Value);
+        Out.print("Value={}\n", IntLiteral->Value);
         Out.pop();
+    }
+
+    void ASTDumper::visitBoolLiteral(const BoolLiteral *BoolLiteral) {
+        Out.print("BoolLiteral {}:\n", BoolLiteral->Range);
+        Out.push();
+        Out.print("Value={}\n", BoolLiteral->Value ? "true" : "false");
+        Out.pop();
+    }
+
+    void ASTDumper::visitFloatingLiteral(const FloatingLiteral *FloatingLiteral) {
+        Out.print("FloatingLiteral {}:\n", FloatingLiteral->Range);
+        Out.push();
+        Out.print("Kind={}\n", FloatingLiteral->FloatKind);
+        Out.print("Value={}\n", FloatingLiteral->Value);
+        Out.pop();
+    }
+
+    void ASTDumper::visitNullLiteral(const NullLiteral *NullLiteral) {
+        Out.print("NullLiteral {}\n", NullLiteral->Range);
     }
 
     void ASTDumper::visitVarExpr(const VarExpr *VarExpr) {
         Out.print("VarExpr {}:\n", VarExpr->Range);
         Out.push();
-        Out.print("Name={}\n", VarExpr->Name->getName());
+        Out.print("Name={}\n", VarExpr->Name->GetName());
         Out.pop();
     }
 

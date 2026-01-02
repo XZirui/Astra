@@ -8,11 +8,20 @@
 #include "astra/parser/AstraParser.h"
 
 int main() {
-    auto input = R"(if (x > 0) {
-    return 4 < y + 3 * 2 / 4;
-} else {
-    return x == 10;
-})";
+    auto input = R"(def a() -> void {
+    if (x > 0) {
+        return 4 < y + 3 * 2 / 4;
+    } else {
+        return x == 10.0;
+        return x + 3.14;
+    }
+    if(x == null) {
+        return true;
+    }
+    break;
+    continue;
+}
+)";
 
     antlr4::ANTLRInputStream input_stream(input);
     astra::parser::AstraLexer lexer(&input_stream);

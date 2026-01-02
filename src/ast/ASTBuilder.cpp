@@ -62,8 +62,55 @@ namespace astra::ast {
     std::any ASTBuilder::visitTopLevelObject(parser::AstraParser::TopLevelObjectContext *Ctx) {
         // TODO
         auto *Result = AstCtx.create<TopLevelObject>(support::SourceRange::rangeOf(Ctx));
-        Result->Statement = std::any_cast<Stmt *>(visit(Ctx->statement()));
+        Result->Declaration = std::any_cast<Decl *>(visit(Ctx->declaration()));
         return Result;
+    }
+
+    std::any ASTBuilder::visitDeclaration(parser::AstraParser::DeclarationContext *Ctx) {
+        if (Ctx->functionDecl()) {
+            return visit(Ctx->functionDecl());
+        }
+
+        assert(false && "Unknown declaration type");
+    }
+
+    std::any ASTBuilder::visitFunctionDecl(parser::AstraParser::FunctionDeclContext *Ctx) {
+        auto *Result = AstCtx.create<FunctionDecl>(support::SourceRange::rangeOf(Ctx));
+        Result->Name = AstCtx.getIdentifier(Ctx->IDENTIFIER()->getText());
+        if (Ctx->paramList()) {
+            Result->Params = std::any_cast<std::vector<ParamDecl *> >(
+                visit(Ctx->paramList())
+            );
+        }
+        Result->ReturnType = std::any_cast<Type *>(visit(Ctx->type()));
+        Result->Body = std::any_cast<Stmt *>(visit(Ctx->blockStmt()));
+        return static_cast<Decl *>(Result);
+    }
+
+    std::any ASTBuilder::visitParamList(parser::AstraParser::ParamListContext *Ctx) {
+        auto Result = std::vector<ParamDecl *>{};
+        for (auto *ParamCtx: Ctx->parameter()) {
+            Result.emplace_back(std::any_cast<ParamDecl *>(visit(ParamCtx)));
+        }
+        return Result;
+    }
+
+    std::any ASTBuilder::visitParameter(parser::AstraParser::ParameterContext *Ctx) {
+        auto *Result = AstCtx.create<ParamDecl>(support::SourceRange::rangeOf(Ctx));
+        Result->ParamKind = ParamType::Default; // TODO: support other param types
+        Result->Name = AstCtx.getIdentifier(Ctx->IDENTIFIER()->getText());
+        Result->ParamType = std::any_cast<Type *>(visit(Ctx->type()));
+
+        if (Ctx->expression()) {
+            Result->DefaultValue = std::any_cast<Expr *>(visit(Ctx->expression()));
+        }
+        return static_cast<ParamDecl *>(Result);
+    }
+
+    std::any ASTBuilder::visitType(parser::AstraParser::TypeContext *Ctx) {
+        return static_cast<Type *>(
+            AstCtx.create<TypeRef>(AstCtx.getIdentifier(Ctx->IDENTIFIER()->getText()))
+        );
     }
 
     std::any ASTBuilder::visitStatement(parser::AstraParser::StatementContext *Ctx) {
@@ -78,6 +125,12 @@ namespace astra::ast {
         }
         if (Ctx->returnStmt()) {
             return visit(Ctx->returnStmt());
+        }
+        if (Ctx->breakStmt()) {
+            return visit(Ctx->breakStmt());
+        }
+        if (Ctx->continueStmt()) {
+            return visit(Ctx->continueStmt());
         }
 
         assert(false && "Unknown statement type");
@@ -121,6 +174,18 @@ namespace astra::ast {
         auto *Result = AstCtx.create<ReturnStmt>(support::SourceRange::rangeOf(Ctx));
         Result->Expression = ReturnValue;
         return static_cast<Stmt *>(Result);
+    }
+
+    std::any ASTBuilder::visitBreakStmt(parser::AstraParser::BreakStmtContext *Ctx) {
+        return static_cast<Stmt *>(
+            AstCtx.create<BreakStmt>(support::SourceRange::rangeOf(Ctx))
+        );
+    }
+
+    std::any ASTBuilder::visitContinueStmt(parser::AstraParser::ContinueStmtContext *Ctx) {
+        return static_cast<Stmt *>(
+            AstCtx.create<ContinueStmt>(support::SourceRange::rangeOf(Ctx))
+        );
     }
 
     std::any ASTBuilder::visitExpression(parser::AstraParser::ExpressionContext *Ctx) {
@@ -242,7 +307,7 @@ namespace astra::ast {
         return static_cast<Expr *>(Result);
     }
 
-    std::any ASTBuilder::visitLiteral(parser::AstraParser::LiteralContext *Ctx) {
+    std::any ASTBuilder::visitIntLiteral(parser::AstraParser::IntLiteralContext *Ctx) {
         auto Text = Ctx->getText();
         auto Base = detectBase(Text);
 
@@ -261,8 +326,33 @@ namespace astra::ast {
             // TODO: handle error: invalid format
         }
 
-        auto *Result = AstCtx.create<LiteralExpr>(support::SourceRange::rangeOf(Ctx));
+        auto *Result = AstCtx.create<IntLiteral>(support::SourceRange::rangeOf(Ctx));
         Result->Value = Value;
+        return static_cast<Expr *>(Result);
+    }
+
+    std::any ASTBuilder::visitBoolLiteral(parser::AstraParser::BoolLiteralContext *Ctx) {
+        auto *Result = AstCtx.create<BoolLiteral>(support::SourceRange::rangeOf(Ctx));
+        Result->Value = (Ctx->getText() == "true");
+        return static_cast<Expr *>(Result);
+    }
+
+    std::any ASTBuilder::visitNullLiteral(parser::AstraParser::NullLiteralContext *Ctx) {
+        auto *Result = AstCtx.create<NullLiteral>(support::SourceRange::rangeOf(Ctx));
+        return static_cast<Expr *>(Result);
+    }
+
+    std::any ASTBuilder::visitFloatLiteral(parser::AstraParser::FloatLiteralContext *Ctx) {
+        auto *Result = AstCtx.create<FloatingLiteral>(support::SourceRange::rangeOf(Ctx));
+        Result->FloatKind = FloatType::Float;
+        Result->Value = std::stof(Ctx->getText());
+        return static_cast<Expr *>(Result);
+    }
+
+    std::any ASTBuilder::visitDoubleLiteral(parser::AstraParser::DoubleLiteralContext *Ctx) {
+        auto *Result = AstCtx.create<FloatingLiteral>(support::SourceRange::rangeOf(Ctx));
+        Result->FloatKind = FloatType::Double;
+        Result->Value = std::stod(Ctx->getText());
         return static_cast<Expr *>(Result);
     }
 } // namespace astra::ast

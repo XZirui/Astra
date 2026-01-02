@@ -14,8 +14,31 @@ file
 
 // TODO: Adjust top level objects
 topLevelObject
-    : statement
+    : declaration
     ;
+
+declaration
+    : functionDecl
+    ;
+
+functionDecl
+    : DEF IDENTIFIER LPAREN paramList? RPAREN ARROW type blockStmt
+    ;
+
+paramList
+    : parameter (COMMA parameter)*
+    ;
+
+parameter
+    : IDENTIFIER COLON type (ASSIGNMENT expression)?
+    ;
+
+// TODO: more types such as function types
+type
+    : LPAREN type RPAREN
+    | IDENTIFIER
+    ;
+
 
 // TODO assignment
 statement
@@ -23,6 +46,8 @@ statement
     | exprStmt
     | ifStmt
     | returnStmt
+    | breakStmt
+    | continueStmt
     ;
 
 blockStmt
@@ -39,6 +64,15 @@ ifStmt
 
 returnStmt
     : RETURN expression? SEMICOLON
+    ;
+
+// TODO: support labels
+breakStmt
+    : BREAK SEMICOLON
+    ;
+
+continueStmt
+    : CONTINUE SEMICOLON
     ;
 
 expression
@@ -105,5 +139,9 @@ unaryExpr
 primaryExpr
     : LPAREN expression RPAREN  # ParenExpr
     | IDENTIFIER                # Variable
-    | INTEGER_LITERAL           # Literal
+    | INTEGER_LITERAL           # IntLiteral
+    | BOOLEAN_LITERAL           # BoolLiteral
+    | NULL_LITERAL              # NullLiteral
+    | FLOAT_LITERAL             # FloatLiteral
+    | DOUBLE_LITERAL            # DoubleLiteral
     ;
