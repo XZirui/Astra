@@ -12,6 +12,7 @@ out/
 *.lo
 *.o
 *.obj
+gen/
 
 # Generated files by ANTLR
 **/antlr4-generated/
