@@ -1,10 +1,10 @@
 #pragma once
 #include <cstdlib>
 
-namespace astra::ast {
-    class ArenaAllocator {
+namespace astra::support {
+    class Allocator {
         struct Block {
-            char *Data{};
+            char  *Data{};
             size_t Size{};
             size_t Offset{};
             Block *Next{};
@@ -17,13 +17,14 @@ namespace astra::ast {
             return (Size + Align - 1) & ~(Align - 1);
         }
 
-        static bool hasSpace(const Block *TargetBlock, size_t Size, size_t Align) {
+        static bool hasSpace(const Block *TargetBlock, size_t Size,
+                             size_t Align) {
             size_t AlignedOffset = alignUp(TargetBlock->Offset, Align);
             return AlignedOffset + Size <= TargetBlock->Size;
         }
 
         Block *allocateBlock(size_t MinSize) const {
-            auto* NewBlock = new Block;
+            auto *NewBlock = new Block;
             NewBlock->Size = MinSize;
             NewBlock->Data = static_cast<char *>(std::malloc(NewBlock->Size));
             NewBlock->Offset = 0;
@@ -32,7 +33,8 @@ namespace astra::ast {
         }
 
     public:
-        explicit ArenaAllocator(size_t Blocks = 4096) : Head(nullptr), BlockSize(Blocks) {};
+        explicit Allocator(size_t Blocks = 4096)
+            : Head(nullptr), BlockSize(Blocks) {};
 
         void *allocate(size_t Size, size_t Align) {
             if (!Head || !hasSpace(Head, Size, Align)) {
@@ -40,12 +42,12 @@ namespace astra::ast {
             }
 
             size_t AlignedOffset = alignUp(Head->Offset, Align);
-            void *Ptr = Head->Data + AlignedOffset;
+            void  *Ptr = Head->Data + AlignedOffset;
             Head->Offset = AlignedOffset + Size;
             return Ptr;
         }
 
-        ~ArenaAllocator() {
+        ~Allocator() {
             Block *Current = Head;
             while (Current) {
                 Block *Next = Current->Next;
@@ -55,4 +57,4 @@ namespace astra::ast {
             }
         }
     };
-} // namespace astra::ast
+} // namespace astra::support

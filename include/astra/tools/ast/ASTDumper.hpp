@@ -1,9 +1,28 @@
 #pragma once
 
-#include "ASTVisitor.hpp"
+#include "astra/ast/ASTVisitor.hpp"
 #include "astra/support/Printer.hpp"
 
-namespace astra::ast {
+namespace astra::tools::ast {
+    using astra::ast::ASTConstVisitor;
+    using astra::ast::ASTNode;
+    using astra::ast::Program;
+    using astra::ast::TopLevelObject;
+    using astra::ast::FunctionDecl;
+    using astra::ast::ParamDecl;
+    using astra::ast::BlockStmt;
+    using astra::ast::IfStmt;
+    using astra::ast::ExprStmt;
+    using astra::ast::ReturnStmt;
+    using astra::ast::BreakStmt;
+    using astra::ast::ContinueStmt;
+    using astra::ast::IntLiteral;
+    using astra::ast::BoolLiteral;
+    using astra::ast::FloatingLiteral;
+    using astra::ast::NullLiteral;
+    using astra::ast::VarExpr;
+    using astra::ast::UnaryExpr;
+    using astra::ast::BinaryExpr;
     // class ASTDumper final : public ASTVisitor {
     // public:
     //     explicit ASTDumper(support::Printer &out);
@@ -23,6 +42,7 @@ namespace astra::ast {
 
         void dump(const Program *Program);
 
+        void visitASTNode([[maybe_unused]] const ASTNode *Node) {}
         void visitProgram(const Program *Program);
         void visitTopLevelObject(const TopLevelObject *TopLevelObject);
         void visitFunctionDecl(const FunctionDecl *FunctionDecl);
@@ -44,4 +64,4 @@ namespace astra::ast {
     private:
         support::Printer &Out;
     };
-} // namespace astra::ast
+} // namespace astra::tools::ast

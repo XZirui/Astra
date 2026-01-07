@@ -1,5 +1,5 @@
 add_library(astra-support
-    Printer.cpp
+        Printer.cpp
 )
 
 add_library(astra::support ALIAS astra-support)

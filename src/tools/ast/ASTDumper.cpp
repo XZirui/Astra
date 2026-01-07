@@ -1,50 +1,66 @@
-#include "astra/ast/ASTDumper.hpp"
+#include "astra/tools/ast/ASTDumper.hpp"
+
+#include "astra/sema/Type.hpp"
 #include "astra/support/SourceRangeFmt.hpp"
 
-template<>
-struct fmt::formatter<astra::ast::Op> {
+template <> struct fmt::formatter<astra::ast::Op> {
     constexpr auto parse(format_parse_context &Ctx) { return Ctx.begin(); }
 
-    template<typename FormatContext>
+    template <typename FormatContext>
     auto format(const astra::ast::Op &Operator, FormatContext &Ctx) {
         switch (Operator) {
-                using enum astra::ast::Op;
-            case Add: return fmt::format_to(Ctx.out(), "+");
-            case Sub: return fmt::format_to(Ctx.out(), "-");
-            case Mult: return fmt::format_to(Ctx.out(), "*");
-            case Div: return fmt::format_to(Ctx.out(), "/");
-            case Mod: return fmt::format_to(Ctx.out(), "%");
-            case Eq: return fmt::format_to(Ctx.out(), "==");
-            case Neq: return fmt::format_to(Ctx.out(), "!=");
-            case Lt: return fmt::format_to(Ctx.out(), "<");
-            case Gt: return fmt::format_to(Ctx.out(), ">");
-            case Le: return fmt::format_to(Ctx.out(), "<=");
-            case Ge: return fmt::format_to(Ctx.out(), ">=");
-            case Disj: return fmt::format_to(Ctx.out(), "||");
-            case Conj: return fmt::format_to(Ctx.out(), "&&");
-            default: return fmt::format_to(Ctx.out(), "UnknownOp");
+            using enum astra::ast::Op;
+        case Add:
+            return fmt::format_to(Ctx.out(), "+");
+        case Sub:
+            return fmt::format_to(Ctx.out(), "-");
+        case Mult:
+            return fmt::format_to(Ctx.out(), "*");
+        case Div:
+            return fmt::format_to(Ctx.out(), "/");
+        case Mod:
+            return fmt::format_to(Ctx.out(), "%");
+        case Eq:
+            return fmt::format_to(Ctx.out(), "==");
+        case Neq:
+            return fmt::format_to(Ctx.out(), "!=");
+        case Lt:
+            return fmt::format_to(Ctx.out(), "<");
+        case Gt:
+            return fmt::format_to(Ctx.out(), ">");
+        case Le:
+            return fmt::format_to(Ctx.out(), "<=");
+        case Ge:
+            return fmt::format_to(Ctx.out(), ">=");
+        case Disj:
+            return fmt::format_to(Ctx.out(), "||");
+        case Conj:
+            return fmt::format_to(Ctx.out(), "&&");
+        default:
+            return fmt::format_to(Ctx.out(), "UnknownOp");
         }
     }
 };
 
-template<>
-struct fmt::formatter<astra::ast::FloatType> {
+template <> struct fmt::formatter<astra::ast::FloatType> {
     constexpr auto parse(format_parse_context &Ctx) { return Ctx.begin(); }
 
-    template<typename FormatContext>
+    template <typename FormatContext>
     auto format(const astra::ast::FloatType &Kind, FormatContext &Ctx) {
         switch (Kind) {
-                using enum astra::ast::FloatType;
-            case Float: return fmt::format_to(Ctx.out(), "float");
-            case Double: return fmt::format_to(Ctx.out(), "double");
-            default: return fmt::format_to(Ctx.out(), "UnknownFloatType");
+            using enum astra::ast::FloatType;
+        case Float:
+            return fmt::format_to(Ctx.out(), "float");
+        case Double:
+            return fmt::format_to(Ctx.out(), "double");
+        default:
+            return fmt::format_to(Ctx.out(), "UnknownFloatType");
         }
     }
 };
 
-namespace astra::ast {
-    ASTDumper::ASTDumper(support::Printer &Out) : Out(Out) {
-    }
+namespace astra::tools::ast {
+    ASTDumper::ASTDumper(support::Printer &Out) : Out(Out) {}
 
     void ASTDumper::dump(const Program *Program) {
         Out.print("AST Dump:\n");
@@ -55,7 +71,7 @@ namespace astra::ast {
     void ASTDumper::visitProgram(const Program *Program) {
         Out.print("Program {}:\n", Program->Range);
         Out.push();
-        for (auto *const Object: Program->Objects) {
+        for (auto *const Object : Program->Objects) {
             visit(Object);
         }
         Out.pop();
@@ -68,14 +84,15 @@ namespace astra::ast {
     void ASTDumper::visitFunctionDecl(const FunctionDecl *FunctionDecl) {
         Out.print("FunctionDecl {}:\n", FunctionDecl->Range);
         Out.push();
-        Out.print("Name={}\n", FunctionDecl->Name->GetName());
+        Out.print("Name={}\n", FunctionDecl->Name->getName());
         Out.print("Params:\n");
         Out.push();
-        for (auto *const Param: FunctionDecl->Params) {
+        for (auto *const Param : FunctionDecl->Params) {
             visit(Param);
         }
         Out.pop();
-        Out.print("ReturnType: {}\n", FunctionDecl->ReturnType->ToString());
+        Out.print("ReturnType: {}\n",
+                  FunctionDecl->ReturnType->Name->getName());
         Out.print("Body:\n");
         Out.push();
         visit(FunctionDecl->Body);
@@ -86,15 +103,15 @@ namespace astra::ast {
     void ASTDumper::visitParamDecl(const ParamDecl *ParamDecl) {
         Out.print("ParamDecl {}:\n", ParamDecl->Range);
         Out.push();
-        Out.print("Name={}\n", ParamDecl->Name->GetName());
-        Out.print("Type={}\n", ParamDecl->ParamType->ToString());
+        Out.print("Name={}\n", ParamDecl->Name->getName());
+        Out.print("Type={}\n", ParamDecl->ParamType->Name->getName());
         Out.pop();
     }
 
     void ASTDumper::visitBlockStmt(const BlockStmt *BlockStmt) {
         Out.print("BlockStmt {}:\n", BlockStmt->Range);
         Out.push();
-        for (auto *const Stmt: BlockStmt->Statements) {
+        for (auto *const Stmt : BlockStmt->Statements) {
             visit(Stmt);
         }
         Out.pop();
@@ -158,7 +175,8 @@ namespace astra::ast {
         Out.pop();
     }
 
-    void ASTDumper::visitFloatingLiteral(const FloatingLiteral *FloatingLiteral) {
+    void
+    ASTDumper::visitFloatingLiteral(const FloatingLiteral *FloatingLiteral) {
         Out.print("FloatingLiteral {}:\n", FloatingLiteral->Range);
         Out.push();
         Out.print("Kind={}\n", FloatingLiteral->FloatKind);
@@ -173,7 +191,7 @@ namespace astra::ast {
     void ASTDumper::visitVarExpr(const VarExpr *VarExpr) {
         Out.print("VarExpr {}:\n", VarExpr->Range);
         Out.push();
-        Out.print("Name={}\n", VarExpr->Name->GetName());
+        Out.print("Name={}\n", VarExpr->Name->getName());
         Out.pop();
     }
 
@@ -199,4 +217,4 @@ namespace astra::ast {
         Out.pop();
         Out.pop();
     }
-} // namespace astra::ast
+} // namespace astra::tools::ast

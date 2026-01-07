@@ -24,7 +24,7 @@ NODE(FloatingLiteral, LiteralExpr,
 
 // primaryExpr : IDENTIFIER
 NODE(VarExpr, Expr,
-    ATTR(Identifier *, Name)
+    ATTR(support::Identifier *, Name)
 )
 
 // unaryExpr

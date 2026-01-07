@@ -27,8 +27,10 @@ TEST_CASE("SourceLocation - construction", "[support][SourceRange]") {
 
 TEST_CASE("SourceRange - basic properties", "[support][SourceRange]") {
     astra::support::SourceRange Range;
-    STATIC_REQUIRE(std::is_same_v<decltype(Range.Begin), astra::support::SourceLocation>);
-    STATIC_REQUIRE(std::is_same_v<decltype(Range.End), astra::support::SourceLocation>);
+    STATIC_REQUIRE(
+        std::is_same_v<decltype(Range.Begin), astra::support::SourceLocation>);
+    STATIC_REQUIRE(
+        std::is_same_v<decltype(Range.End), astra::support::SourceLocation>);
     STATIC_REQUIRE(std::is_integral_v<decltype(Range.File)>);
 
     REQUIRE(Range.Begin.Line == 0);
@@ -40,10 +42,10 @@ TEST_CASE("SourceRange - basic properties", "[support][SourceRange]") {
 
 TEST_CASE("SourceRange - construction", "[support][SourceRange]") {
     astra::support::SourceRange Range{
-                {1, 5},  // begin
-                {3, 10}, // end
-                42       // file
-            };
+        {1, 5},  // begin
+        {3, 10}, // end
+        42       // file
+    };
     REQUIRE(Range.Begin.Line == 1);
     REQUIRE(Range.Begin.Column == 5);
     REQUIRE(Range.End.Line == 3);
@@ -59,7 +61,8 @@ TEST_CASE("SourceRange - rangeOf", "[support][SourceRange]") {
     Ctx.StopToken.Column = 8;
     Ctx.StopToken.Text = "example";
 
-    astra::support::SourceRange Range = astra::support::SourceRange::rangeOf(&Ctx, 7);
+    astra::support::SourceRange Range =
+        astra::support::SourceRange::rangeOf(&Ctx, 7);
 
     REQUIRE(Range.Begin.Line == 2);
     REQUIRE(Range.Begin.Column == 5); // +1 adjustment

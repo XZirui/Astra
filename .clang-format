@@ -2,6 +2,9 @@ BasedOnStyle: LLVM
 
 IndentWidth: 4
 ContinuationIndentWidth: 4
-
-ColumnLimit: 80
 LineEnding: LF
+AccessModifierOffset: -4
+UseTab: Never
+SortIncludes: Never
+AlignConsecutiveDeclarations: Enabled
+NamespaceIndentation: All

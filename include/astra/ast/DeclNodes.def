@@ -1,19 +1,19 @@
 // ReSharper disable once CppMissingIncludeGuard
 
 ABSTRACT_NODE(Decl, ASTNode,
-    ATTR(Identifier *, Name)
+    ATTR(support::Identifier *, Name)
 )
 
 // parameter
 NODE(ParamDecl, Decl,
     ATTR(ParamType, ParamKind)
-    ATTR(Type *, ParamType)
+    ATTR(TypeRef *, ParamType)
     ATTR(Expr *, DefaultValue) // optional
 )
 
 // functionDecl
 NODE(FunctionDecl, Decl,
     ATTR_LIST(ParamDecl *, Params)
-    ATTR(Type *, ReturnType)
+    ATTR(TypeRef *, ReturnType)
     ATTR(Stmt *, Body)
 )

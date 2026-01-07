@@ -1,11 +1,10 @@
 #include <ANTLRInputStream.h>
 #include <iostream>
 
-#include "astra/ast/ASTBuilder.hpp"
-#include "astra/ast/ASTDumper.hpp"
-
 #include "astra/parser/AstraLexer.h"
+#include "astra/frontend/ASTBuilder.hpp"
 #include "astra/parser/AstraParser.h"
+#include "astra/tools/ast/ASTDumper.hpp"
 
 int main() {
     auto input = R"(def a() -> void {
@@ -23,20 +22,20 @@ int main() {
 }
 )";
 
-    antlr4::ANTLRInputStream input_stream(input);
+    antlr4::ANTLRInputStream  input_stream(input);
     astra::parser::AstraLexer lexer(&input_stream);
     antlr4::CommonTokenStream tokens(&lexer);
 
     astra::parser::AstraParser parser(&tokens);
-    auto tree = parser.file();
+    auto                       tree = parser.file();
 
     // std::cout << tree->toStringTree(&parser, true) << std::endl;
 
-    auto *astCtx = new astra::ast::ASTContext();
-    astra::ast::ASTBuilder builder(*astCtx);
-    auto *program = builder.build(tree);
-    auto printer = astra::support::Printer(std::cout);
-    astra::ast::ASTDumper dumper(printer);
+    auto                       *astCtx = new astra::frontend::CompilerContext();
+    astra::frontend::ASTBuilder builder(*astCtx);
+    auto                       *program = builder.build(tree);
+    auto                        printer = astra::support::Printer(std::cout);
+    astra::tools::ast::ASTDumper dumper(printer);
     dumper.dump(program);
 
     return 0;

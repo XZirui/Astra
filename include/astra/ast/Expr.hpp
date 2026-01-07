@@ -1,9 +1,24 @@
 #pragma once
 
 #include "Node.hpp"
+#include "astra/support/Identifier.hpp"
 
 namespace astra::ast {
-    enum class Op { Add, Sub, Mult, Div, Mod, Eq, Neq, Lt, Gt, Le, Ge, Disj, Conj }; // TODO
+    enum class Op {
+        Add,
+        Sub,
+        Mult,
+        Div,
+        Mod,
+        Eq,
+        Neq,
+        Lt,
+        Gt,
+        Le,
+        Ge,
+        Disj,
+        Conj
+    }; // TODO
     enum class FloatType { Float, Double };
 
 #include "macros/NodeMacros.hpp" // NOLINT(*-include-order)

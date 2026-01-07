@@ -1,0 +1,6 @@
+// ReSharper disable once CppMissingIncludeGuard
+
+NODE(TypeRef, ASTNode,
+    ATTR(support::Identifier *, Name)
+    ATTR(sema::Type *, ResolvedType)
+)

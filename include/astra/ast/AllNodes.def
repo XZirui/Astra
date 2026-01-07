@@ -2,3 +2,4 @@
 #include "StmtNodes.def"
 #include "DeclNodes.def"
 #include "ProgramNodes.def"
+#include "TypeRefNodes.def"
