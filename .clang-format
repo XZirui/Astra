@@ -6,5 +6,5 @@ LineEnding: LF
 AccessModifierOffset: -4
 UseTab: Never
 SortIncludes: Never
-AlignConsecutiveDeclarations: Enabled
+AlignConsecutiveDeclarations: true
 NamespaceIndentation: All

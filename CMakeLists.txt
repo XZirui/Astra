@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 project(
         astra
         VERSION 0.1.0
-        LANGUAGES CXX
+        LANGUAGES CXX C
 )
 
 # Global C++ settings
@@ -16,9 +16,9 @@ option(BUILD_TESTS "Build tests" ON)
 
 # Warnings
 if (MSVC)
-    add_compile_options(/W4 /permissive-)
+    add_compile_options(/W4)
 else ()
-    add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+    add_compile_options(-Wall -Wextra -Wpedantic -Wno-unused-parameter)
 endif ()
 
 # Include paths
@@ -31,6 +31,11 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 include(ExternalAntlr4Cpp)
 include_directories(${ANTLR4_INCLUDE_DIRS})
 find_package(ANTLR REQUIRED)
+
+# LLVM
+find_package(LLVM REQUIRED CONFIG)
+include_directories(${LLVM_INCLUDE_DIRS})
+add_definitions(${LLVM_DEFINITIONS})
 
 # fmt
 Include(FetchContent)

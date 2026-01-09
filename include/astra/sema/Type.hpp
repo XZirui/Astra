@@ -1,7 +1,9 @@
 #pragma once
 
 #include <string>
-#include <vector>
+
+#include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/ArrayRef.h"
 
 namespace astra::sema {
     class Type {
@@ -55,8 +57,7 @@ namespace astra::sema {
 
     public:
         explicit IntType(size_t Width = 32, bool Signed = true)
-            : BuiltinType(Kind::Int), BitWidth(Width), IsSigned(Signed) {
-        }
+            : BuiltinType(Kind::Int), BitWidth(Width), IsSigned(Signed) {}
 
         std::string toString() const override {
             return (IsSigned ? "i" : "u") + std::to_string(BitWidth);
@@ -85,7 +86,7 @@ namespace astra::sema {
         std::string toString() const override { return "bool"; }
     };
 
-    class ArrayType final : public Type {
+    class ArrayType final : public Type, public llvm::FoldingSetNode {
         Type  *ElementType;
         size_t Size;
 
@@ -99,19 +100,30 @@ namespace astra::sema {
         std::string toString() const override {
             return ElementType->toString() + "[" + std::to_string(Size) + "]";
         }
+
+        static void profile(llvm::FoldingSetNodeID &ID, Type *ElementType,
+                            size_t Size) {
+            ID.AddInteger(static_cast<unsigned>(Kind::Array));
+            ID.AddPointer(ElementType);
+            ID.AddInteger(Size);
+        }
+
+        void Profile(llvm::FoldingSetNodeID &ID) const {
+            profile(ID, ElementType, Size);
+        }
     };
 
-    class FunctionType final : public Type {
-        Type               *ReturnType;
-        std::vector<Type *> ParamTypes;
+    class FunctionType final : public Type, public llvm::FoldingSetNode {
+        Type                        *ReturnType;
+        llvm::SmallVector<Type *, 4> ParamTypes;
 
     public:
-        FunctionType(Type *ReturnType, std::vector<Type *> ParamTypes)
+        FunctionType(Type *ReturnType, llvm::ArrayRef<Type *> ParamTypes)
             : Type(Kind::Function), ReturnType(ReturnType),
-              ParamTypes(std::move(ParamTypes)) {}
+              ParamTypes(ParamTypes) {}
 
-        Type                      *getReturnType() const { return ReturnType; }
-        const std::vector<Type *> &getParamTypes() const { return ParamTypes; }
+        Type                  *getReturnType() const { return ReturnType; }
+        llvm::ArrayRef<Type *> getParamTypes() const { return ParamTypes; }
         size_t getParamCount() const { return ParamTypes.size(); }
         Type  *getParamType(size_t Index) const { return ParamTypes[Index]; }
 
@@ -125,6 +137,20 @@ namespace astra::sema {
             }
             Result += ") -> " + ReturnType->toString();
             return Result;
+        }
+
+        static void profile(llvm::FoldingSetNodeID &ID, Type *ReturnType,
+                            llvm::ArrayRef<Type *> ParamTypes) {
+            ID.AddInteger(static_cast<unsigned>(Kind::Function));
+            ID.AddPointer(ReturnType);
+            ID.AddInteger(ParamTypes.size());
+            for (auto *ParamType : ParamTypes) {
+                ID.AddPointer(ParamType);
+            }
+        }
+
+        void Profile(llvm::FoldingSetNodeID &ID) const {
+            profile(ID, ReturnType, ParamTypes);
         }
     };
 } // namespace astra::sema

@@ -1,36 +1,35 @@
 #pragma once
 
-#include <memory>
-#include <string>
-#include <unordered_map>
-#include "astra/support/Allocator.hpp"
 #include "astra/support/Identifier.hpp"
+#include "llvm/ADT/StringMap.h"
+#include "llvm/Support/Allocator.h"
+#include "llvm/Support/StringSaver.h"
+#include <memory>
 
 namespace astra::frontend {
     // Forward declaration
+
     class TypeContext;
+    class SymbolContext;
 
     class CompilerContext {
-        support::Allocator                                     Allocator{};
-        std::unordered_map<std::string, support::Identifier *> Identifiers;
+        llvm::BumpPtrAllocator                 Allocator{};
+        llvm::UniqueStringSaver                StringSaver{Allocator};
+        llvm::StringMap<support::Identifier *> IdentifierMap{};
 
         std::unique_ptr<TypeContext> TypeCtx;
+        std::unique_ptr<SymbolContext> SymbolCtx;
 
     public:
         CompilerContext();
-        support::Identifier *getIdentifier(std::string_view Name);
+        support::Identifier *getIdentifier(llvm::StringRef Name);
+
+        llvm::BumpPtrAllocator &getAllocator() { return Allocator; }
 
         // Memory allocation
         template <typename T, typename... TypeArgs>
         T *create(TypeArgs &&...Args) {
-            void *Mem = Allocator.allocate(sizeof(T), alignof(T));
-            return new (Mem) T{std::forward<TypeArgs>(Args)...};
-        }
-
-        template <typename T, typename... TypeArgs>
-        T *createArray(size_t Count) {
-            void *Mem = Allocator.allocate(sizeof(T) * Count, alignof(T));
-            return static_cast<T *>(Mem);
+            return new (Allocator) T(std::forward<TypeArgs>(Args)...);
         }
     };
 } // namespace astra::frontend

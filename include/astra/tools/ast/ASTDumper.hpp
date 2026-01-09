@@ -42,7 +42,7 @@ namespace astra::tools::ast {
 
         void dump(const Program *Program);
 
-        void visitASTNode([[maybe_unused]] const ASTNode *Node) {}
+        void visitASTNode(const ASTNode *) {}
         void visitProgram(const Program *Program);
         void visitTopLevelObject(const TopLevelObject *TopLevelObject);
         void visitFunctionDecl(const FunctionDecl *FunctionDecl);

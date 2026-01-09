@@ -1,28 +1,20 @@
 #include "astra/frontend/CompilerContext.hpp"
 
 #include "astra/frontend/TypeContext.hpp"
-
-#include <cstring>
+#include "astra/frontend/SymbolContext.hpp"
 
 namespace astra::frontend {
     CompilerContext::CompilerContext()
-        : TypeCtx(std::make_unique<TypeContext>(*this)) {}
+        : TypeCtx(std::make_unique<TypeContext>(*this)),
+          SymbolCtx(std::make_unique<SymbolContext>(*this)) {}
 
-    support::Identifier *CompilerContext::getIdentifier(std::string_view Name) {
-        auto It = Identifiers.find(std::string(Name));
-        if (It != Identifiers.end()) {
-            return It->second;
+    support::Identifier *CompilerContext::getIdentifier(llvm::StringRef Name) {
+        auto *It = IdentifierMap[Name];
+        if (It) {
+            return It;
         }
 
-        // Not found, create a new Identifier
-        auto *Storage =
-            static_cast<char *>(Allocator.allocate(Name.size(), alignof(char)));
-
-        std::memcpy(Storage, Name.data(), Name.size());
-        std::string_view Interned(Storage, Name.size());
-
-        auto *Id = create<support::Identifier>(Interned);
-        Identifiers.emplace(Interned, Id);
-        return Id;
+        auto SavedName = StringSaver.save(Name);
+        return IdentifierMap[Name] = create<support::Identifier>(SavedName);
     }
 } // namespace astra::frontend

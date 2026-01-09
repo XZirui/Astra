@@ -1,21 +1,22 @@
-add_library(astra-tools-ast)
+add_library(astra-sema)
 
-target_sources(astra-tools-ast
+target_sources(astra-sema
         PRIVATE
-        ASTDumper.cpp
+        SymbolTable.cpp
 )
 
 llvm_map_components_to_libnames(llvm_libs
         Support
 )
 
-target_include_directories(astra-tools-ast
+target_include_directories(astra-sema
         PUBLIC
         ${PROJECT_SOURCE_DIR}/include
 )
 
-target_link_libraries(astra-tools-ast
+target_link_libraries(astra-sema
         PUBLIC
+        astra-frontend
         astra-support
         ${llvm_libs}
 )

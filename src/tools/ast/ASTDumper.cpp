@@ -84,7 +84,7 @@ namespace astra::tools::ast {
     void ASTDumper::visitFunctionDecl(const FunctionDecl *FunctionDecl) {
         Out.print("FunctionDecl {}:\n", FunctionDecl->Range);
         Out.push();
-        Out.print("Name={}\n", FunctionDecl->Name->getName());
+        Out.print("Name={}\n", FunctionDecl->Name->getName().data());
         Out.print("Params:\n");
         Out.push();
         for (auto *const Param : FunctionDecl->Params) {
@@ -92,7 +92,7 @@ namespace astra::tools::ast {
         }
         Out.pop();
         Out.print("ReturnType: {}\n",
-                  FunctionDecl->ReturnType->Name->getName());
+                  FunctionDecl->ReturnType->Name->getName().data());
         Out.print("Body:\n");
         Out.push();
         visit(FunctionDecl->Body);
@@ -103,8 +103,8 @@ namespace astra::tools::ast {
     void ASTDumper::visitParamDecl(const ParamDecl *ParamDecl) {
         Out.print("ParamDecl {}:\n", ParamDecl->Range);
         Out.push();
-        Out.print("Name={}\n", ParamDecl->Name->getName());
-        Out.print("Type={}\n", ParamDecl->ParamType->Name->getName());
+        Out.print("Name={}\n", ParamDecl->Name->getName().data());
+        Out.print("Type={}\n", ParamDecl->ParamType->Name->getName().data());
         Out.pop();
     }
 
@@ -191,7 +191,7 @@ namespace astra::tools::ast {
     void ASTDumper::visitVarExpr(const VarExpr *VarExpr) {
         Out.print("VarExpr {}:\n", VarExpr->Range);
         Out.push();
-        Out.print("Name={}\n", VarExpr->Name->getName());
+        Out.print("Name={}\n", VarExpr->Name->getName().data());
         Out.pop();
     }
 
