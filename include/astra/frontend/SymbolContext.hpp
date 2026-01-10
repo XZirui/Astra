@@ -19,7 +19,7 @@ namespace astra::frontend {
         void pushScope() { createNewScope(); }
         void popScope() { destroyCurrentScope(); }
 
-        sema::Symbol *lookup(llvm::StringRef Name) {
+        sema::Symbol *lookup(llvm::StringRef Name) const {
             assert(CurrentScope != nullptr && "Cannot lookup symbol without an active scope");
             return CurrentScope->lookup(Name);
         }

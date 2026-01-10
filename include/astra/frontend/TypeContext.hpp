@@ -2,7 +2,7 @@
 
 #include "CompilerContext.hpp"
 #include "astra/sema/Type.hpp"
-#include "llvm/Support/Casting.h"
+#include <llvm/Support/Casting.h>
 
 namespace astra::frontend {
     class TypeContext {

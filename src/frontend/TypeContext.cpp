@@ -1,7 +1,6 @@
 #include "astra/frontend/TypeContext.hpp"
 #include "astra/frontend/CompilerContext.hpp"
-
-#include "llvm/ADT/ArrayRef.h"
+#include <llvm/ADT/ArrayRef.h>
 
 namespace astra::frontend {
     TypeContext::TypeContext(CompilerContext &Ctx) : CompilerCtx(Ctx) {

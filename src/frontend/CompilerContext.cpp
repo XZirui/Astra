@@ -1,7 +1,6 @@
 #include "astra/frontend/CompilerContext.hpp"
-
-#include "astra/frontend/TypeContext.hpp"
 #include "astra/frontend/SymbolContext.hpp"
+#include "astra/frontend/TypeContext.hpp"
 
 namespace astra::frontend {
     CompilerContext::CompilerContext()

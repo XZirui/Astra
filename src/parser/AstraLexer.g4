@@ -10,75 +10,70 @@ import UnicodeClasses;
 // Operators and Punctuation
 //
 
-DOT : '.';
-COMMA : ',';
-SEMICOLON : ';';
-COLON : ':';
-LPAREN : '(';
-RPAREN : ')';
-LBRACKET : '[';
-RBRACKET : ']';
-LBRACE : '{';
-RBRACE : '}';
-ADD : '+';
-SUB : '-';
-MULT : '*';
-DIV : '/';
-MOD : '%';
-ASSIGNMENT : '=';
-ADD_ASSIGNMENT : '+=';
-SUB_ASSIGNMENT : '-=';
+DOT             : '.';
+COMMA           : ',';
+SEMICOLON       : ';';
+COLON           : ':';
+LPAREN          : '(';
+RPAREN          : ')';
+LBRACKET        : '[';
+RBRACKET        : ']';
+LBRACE          : '{';
+RBRACE          : '}';
+ADD             : '+';
+SUB             : '-';
+MULT            : '*';
+DIV             : '/';
+MOD             : '%';
+ASSIGNMENT      : '=';
+ADD_ASSIGNMENT  : '+=';
+SUB_ASSIGNMENT  : '-=';
 MULT_ASSIGNMENT : '*=';
-DIV_ASSIGNMENT : '/=';
-MOD_ASSIGNMENT : '%=';
-ARROW : '->';
+DIV_ASSIGNMENT  : '/=';
+MOD_ASSIGNMENT  : '%=';
+ARROW           : '->';
 
-EQ: '==';
-NEQ: '!=';
-LE: '<=' ;
-GE: '>=' ;
-LT : '<';
-GT : '>';
+EQ  : '==';
+NEQ : '!=';
+LE  : '<=';
+GE  : '>=';
+LT  : '<';
+GT  : '>';
 
-CONJ: '&&';
-DISJ: '||';
+CONJ : '&&';
+DISJ : '||';
 // TODO: More
 
 //
 // Keywords
 //
 
-IMPORT : 'import';
-IF : 'if';
-ELSE : 'else';
-FOR : 'for';
-WHILE : 'while';
-BREAK : 'break';
+IMPORT   : 'import';
+IF       : 'if';
+ELSE     : 'else';
+FOR      : 'for';
+WHILE    : 'while';
+BREAK    : 'break';
 CONTINUE : 'continue';
-RETURN : 'return';
-DEF : 'def';
-CLASS : 'class';
+RETURN   : 'return';
+DEF      : 'def';
+CLASS    : 'class';
 
 //
 // Modifiers
 //
 
-PUBLIC : 'public';
-PRIVATE : 'private';
+PUBLIC    : 'public';
+PRIVATE   : 'private';
 PROTECTED : 'protected';
 
 //
 // Logical Literals
 //
 
-BOOLEAN_LITERAL:
-    'true' | 'false'
-;
+BOOLEAN_LITERAL: 'true' | 'false';
 
-NULL_LITERAL:
-    'null'
-;
-
+NULL_LITERAL: 'null';
 
 //
 // Integer Literals
@@ -91,49 +86,32 @@ INTEGER_LITERAL:
     | BIN_INTEGER_LITERAL
 ;
 
-
 //
 // Floating Point Literals
 //
 
-FLOAT_LITERAL:
-    DOUBLE_LITERAL [fF]
-    | INTEGER_LITERAL [fF]
-;
+FLOAT_LITERAL: DOUBLE_LITERAL [fF] | INTEGER_LITERAL [fF];
 
-DOUBLE_LITERAL:
-    DEC_DIGIT+? DOT DEC_DIGIT+ DOUBLE_EXPONENT?
-    | DEC_DIGIT+ DOUBLE_EXPONENT
-;
+DOUBLE_LITERAL: DEC_DIGIT+? DOT DEC_DIGIT+ DOUBLE_EXPONENT? | DEC_DIGIT+ DOUBLE_EXPONENT;
 
 fragment DOUBLE_EXPONENT: [eE] [+-]? DEC_DIGIT+;
 
+// TODO: Separator
+DEC_INTEGER_LITERAL: DEC_DIGIT_NO_ZERO DEC_DIGIT* | '0';
+
+fragment DEC_DIGIT         : [0-9];
+fragment DEC_DIGIT_NO_ZERO : [1-9];
 
 // TODO: Separator
-DEC_INTEGER_LITERAL:
-    DEC_DIGIT_NO_ZERO DEC_DIGIT*
-    | '0'
-;
-
-fragment DEC_DIGIT: [0-9];
-fragment DEC_DIGIT_NO_ZERO: [1-9];
-
-// TODO: Separator
-HEX_INTEGER_LITERAL:
-    '0' [xX] HEX_DIGIT+
-;
+HEX_INTEGER_LITERAL: '0' [xX] HEX_DIGIT+;
 
 fragment HEX_DIGIT: [0-9a-fA-F];
 
-OCT_INTEGER_LITERAL:
-    '0' [oO] OCT_DIGIT+
-;
+OCT_INTEGER_LITERAL: '0' [oO] OCT_DIGIT+;
 
 fragment OCT_DIGIT: [0-7];
 
-BIN_INTEGER_LITERAL:
-    '0' [bB] BIN_DIGIT+
-;
+BIN_INTEGER_LITERAL: '0' [bB] BIN_DIGIT+;
 
 fragment BIN_DIGIT: [01];
 
@@ -141,13 +119,9 @@ fragment BIN_DIGIT: [01];
 // Identifiers
 //
 
-IDENTIFIER:
-    (LETTER | '_') (LETTER | UNICODE_DIGIT | '_')*
-;
+IDENTIFIER: (LETTER | '_') (LETTER | UNICODE_DIGIT | '_')*;
 
-fragment UNICODE_DIGIT:
-    UNICODE_CLASS_ND
-;
+fragment UNICODE_DIGIT: UNICODE_CLASS_ND;
 
 fragment LETTER:
     UNICODE_CLASS_LL
@@ -164,5 +138,5 @@ fragment LETTER:
 
 WS: [ \t\r\n\u000C]+ -> skip;
 
-COMMENT: '/*' .*? '*/' -> channel(HIDDEN);
-LINE_COMMENT: '//' ~[\r\n]* -> channel(HIDDEN);
+COMMENT      : '/*' .*? '*/' -> channel(HIDDEN);
+LINE_COMMENT : '//' ~[\r\n]* -> channel(HIDDEN);

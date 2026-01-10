@@ -1,5 +1,4 @@
 #include "astra/frontend/SymbolContext.hpp"
-
 #include "astra/frontend/CompilerContext.hpp"
 
 namespace astra::frontend {

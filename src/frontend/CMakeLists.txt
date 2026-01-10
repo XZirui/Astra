@@ -4,6 +4,7 @@ target_sources(astra-frontend
         PRIVATE
         ASTBuilder.cpp
         CompilerContext.cpp
+        SemaAnalyzer.cpp
         SymbolContext.cpp
         TypeContext.cpp
 )

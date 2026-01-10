@@ -1,9 +1,8 @@
 #pragma once
 
+#include <llvm/ADT/ArrayRef.h>
+#include <llvm/ADT/FoldingSet.h>
 #include <string>
-
-#include "llvm/ADT/FoldingSet.h"
-#include "llvm/ADT/ArrayRef.h"
 
 namespace astra::sema {
     class Type {

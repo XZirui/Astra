@@ -1,8 +1,6 @@
 #include "astra/frontend/ASTBuilder.hpp"
-
-#include <charconv>
-
 #include "astra/sema/Type.hpp"
+#include <charconv>
 
 using namespace astra::ast;
 

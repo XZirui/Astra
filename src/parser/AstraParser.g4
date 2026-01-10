@@ -1,11 +1,10 @@
-// $antlr-format alignTrailingComments true, columnLimit 150, maxEmptyLinesToKeep 1, reflowComments false, useTab false
-// $antlr-format allowShortRulesOnASingleLine true, allowShortBlocksOnASingleLine true, minEmptyLines 0, alignSemicolons ownLine
-// $antlr-format alignColons trailing, singleLineOverrulesHangingColon true, alignLexerCommands true, alignLabels true, alignTrailers true
+// $antlr-format alignTrailingComments true, columnLimit 150, minEmptyLines 1, maxEmptyLinesToKeep 1, reflowComments false, useTab false
+// $antlr-format allowShortRulesOnASingleLine false, allowShortBlocksOnASingleLine true, alignSemicolons hanging, alignColons hanging
 
 parser grammar AstraParser;
 
 options {
-    tokenVocab=AstraLexer;
+    tokenVocab = AstraLexer;
 }
 
 file
@@ -38,7 +37,6 @@ type
     : LPAREN type RPAREN
     | IDENTIFIER
     ;
-
 
 // TODO assignment
 statement
@@ -137,11 +135,11 @@ unaryExpr
     ;
 
 primaryExpr
-    : LPAREN expression RPAREN  # ParenExpr
-    | IDENTIFIER                # Variable
-    | INTEGER_LITERAL           # IntLiteral
-    | BOOLEAN_LITERAL           # BoolLiteral
-    | NULL_LITERAL              # NullLiteral
-    | FLOAT_LITERAL             # FloatLiteral
-    | DOUBLE_LITERAL            # DoubleLiteral
+    : LPAREN expression RPAREN # ParenExpr
+    | IDENTIFIER               # Variable
+    | INTEGER_LITERAL          # IntLiteral
+    | BOOLEAN_LITERAL          # BoolLiteral
+    | NULL_LITERAL             # NullLiteral
+    | FLOAT_LITERAL            # FloatLiteral
+    | DOUBLE_LITERAL           # DoubleLiteral
     ;
