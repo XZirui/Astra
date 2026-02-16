@@ -60,6 +60,17 @@ DEF      : 'def';
 CLASS    : 'class';
 
 //
+// Built-in Types
+//
+
+VOID   : 'void';
+BOOL   : 'bool';
+INT    : 'int';
+LONG   : 'long';
+FLOAT  : 'float';
+DOUBLE : 'double';
+
+//
 // Modifiers
 //
 

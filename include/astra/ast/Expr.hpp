@@ -1,7 +1,9 @@
 #pragma once
 
 #include "Node.hpp"
-#include "astra/support/Identifier.hpp"
+#include <llvm/ADT/APSInt.h>
+#include <llvm/ADT/APFloat.h>
+#include <llvm/ADT/StringRef.h>
 
 namespace astra::ast {
     enum class Op {

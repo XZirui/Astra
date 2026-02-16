@@ -1,6 +1,26 @@
 // ReSharper disable once CppMissingIncludeGuard
 
-NODE(TypeRef, ASTNode,
-    ATTR(support::Identifier *, Name)
+ABSTRACT_NODE(TypeRef, ASTNode,
     ATTR(sema::Type *, ResolvedType)
+)
+
+NODE(VoidTypeRef, TypeRef,)
+NODE(BoolTypeRef, TypeRef,)
+NODE(IntTypeRef, TypeRef,)
+NODE(LongTypeRef, TypeRef,)
+NODE(FloatTypeRef, TypeRef,)
+NODE(DoubleTypeRef, TypeRef,)
+
+NODE(ArrayTypeRef, TypeRef,
+    ATTR(TypeRef *, ElementType)
+    ATTR(Expr *, Size) // optional, for fixed-size arrays
+)
+
+NODE(FunctionTypeRef, TypeRef,
+    ATTR_LIST(TypeRef *, ParamTypes)
+    ATTR(TypeRef *, ReturnType)
+)
+
+NODE(ClassTypeRef, TypeRef,
+    ATTR(llvm::StringRef, ClassName)
 )

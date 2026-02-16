@@ -16,9 +16,9 @@ option(BUILD_TESTS "Build tests" ON)
 
 # Warnings
 if (MSVC)
-    add_compile_options(/W4 /permissive- /WX)
+    add_compile_options(/W4 /permissive- /WX /wd4100)
 else ()
-    add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+    add_compile_options(-Wall -Wextra -Wpedantic -Werror -Wno-unused-parameter)
 endif ()
 
 # Include paths

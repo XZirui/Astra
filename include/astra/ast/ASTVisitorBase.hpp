@@ -13,9 +13,6 @@ namespace astra::ast {
 #define DISPATCH(NAME, CLASS)                                                  \
     return static_cast<Derived *>(this)->visit##NAME(static_cast<PTR(CLASS)>(D))
 
-        RetTy visit(PTR(ASTNode) D) {
-            switch (D->getKind()) {
-
 #include "macros/NodeMacrosEmpty.hpp"
 
 #undef NODE
@@ -23,6 +20,8 @@ namespace astra::ast {
     case NodeKind::NAME:                                                       \
         DISPATCH(NAME, NAME);
 
+        RetTy visit(PTR(ASTNode) D) {
+            switch (D->getKind()) {
 #include "AllNodes.def"
 
             default:
@@ -36,7 +35,64 @@ namespace astra::ast {
 #include "AllNodes.def"
     };
 
+    template <template <typename> class Ptr, typename Derived,
+              typename RetTy = void>
+    class DeclVisitorBase {
+    public:
+#undef NODE
+#define NODE(NAME, BASE, FIELDS)                                               \
+    case NodeKind::NAME:                                                       \
+        DISPATCH(NAME, NAME);
+
+        RetTy visit(PTR(ASTNode) D) {
+            switch (D->getKind()) {
+#include "DeclNodes.def"
+
+#include "TypeRefNodes.def"
+
+#include "ProgramNodes.def"
+
+            default:
+                throw; // TODO report errors
+            }
+        }
+
+#undef NODE
+#define NODE(NAME, BASE, ...)                                                  \
+    RetTy visit##NAME(PTR(NAME) D) { DISPATCH(BASE, BASE); }
+#include "DeclNodes.def"
+
+#include "TypeRefNodes.def"
+
+#include "ProgramNodes.def"
+    };
+
+    template <template <typename> class Ptr, typename Derived,
+              typename RetTy = void>
+    class ExprVisitorBase {
+    public:
+#undef NODE
+#define NODE(NAME, BASE, FIELDS)                                               \
+    case NodeKind::NAME:                                                       \
+        DISPATCH(NAME, NAME); /* no break: DISPATCH always returns */
+
+        RetTy visit(PTR(ASTNode) D) {
+            switch (D->getKind()) {
+#include "ExprNodes.def"
+
+            default:
+                throw; // TODO report errors
+            }
+        }
+
+#undef NODE
+#define NODE(NAME, BASE, ...)                                                  \
+    RetTy visit##NAME(PTR(NAME) D) { DISPATCH(BASE, BASE); }
+#include "ExprNodes.def"
+    };
+
 #undef PTR
 #undef DISPATCH
 #include "macros/NodeMacrosUndef.hpp"
+
 } // namespace astra::ast

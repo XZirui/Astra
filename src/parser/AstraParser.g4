@@ -34,8 +34,33 @@ parameter
 
 // TODO: more types such as function types
 type
+    : (parenType | typeRef | builtinType) (LBRACKET expression RBRACKET)*
+    | functionType
+    ;
+
+parenType
     : LPAREN type RPAREN
-    | IDENTIFIER
+    ;
+
+typeRef
+    : IDENTIFIER
+    ;
+
+functionType
+    : LPAREN paramTypeList? RPAREN ARROW type
+    ;
+
+paramTypeList
+    : type (COMMA type)*
+    ;
+
+builtinType
+    : VOID   # VoidType
+    | BOOL   # BoolType
+    | INT    # IntType
+    | LONG   # LongType
+    | FLOAT  # FloatType
+    | DOUBLE # DoubleType
     ;
 
 // TODO assignment
