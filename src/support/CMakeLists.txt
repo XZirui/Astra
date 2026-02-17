@@ -1,4 +1,5 @@
 add_library(astra-support
+        Diagnostic.cpp
         Printer.cpp
 )
 

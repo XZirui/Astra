@@ -25,6 +25,7 @@ SUB             : '-';
 MULT            : '*';
 DIV             : '/';
 MOD             : '%';
+NOT             : '!';
 ASSIGNMENT      : '=';
 ADD_ASSIGNMENT  : '+=';
 SUB_ASSIGNMENT  : '-=';
@@ -42,6 +43,19 @@ GT  : '>';
 
 CONJ : '&&';
 DISJ : '||';
+
+BIT_AND : '&';
+BIT_OR  : '|';
+BIT_XOR : '^';
+BIT_NOT : '~';
+LSHIFT  : '<<';
+RSHIFT  : '>>';
+BIT_AND_ASSIGNMENT : '&=';
+BIT_OR_ASSIGNMENT  : '|=';
+BIT_XOR_ASSIGNMENT : '^=';
+LSHIFT_ASSIGNMENT  : '<<=';
+RSHIFT_ASSIGNMENT  : '>>=';
+
 // TODO: More
 
 //

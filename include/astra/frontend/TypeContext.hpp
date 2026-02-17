@@ -2,14 +2,16 @@
 
 #include "CompilerContext.hpp"
 #include "astra/sema/Type.hpp"
+#include <llvm/ADT/StringMap.h>
 #include <llvm/Support/Casting.h>
 
 namespace astra::frontend {
     class TypeContext {
         CompilerContext &CompilerCtx;
 
-        llvm::FoldingSet<sema::ArrayType> ArrayTypes;
+        llvm::FoldingSet<sema::ArrayType>    ArrayTypes;
         llvm::FoldingSet<sema::FunctionType> FunctionTypes;
+        llvm::StringMap<sema::ClassType>     ClassTypes;
 
         sema::VoidType  *VoidTy;
         sema::IntType   *I32Ty;
@@ -19,6 +21,7 @@ namespace astra::frontend {
         sema::FloatType *F32Ty;
         sema::FloatType *F64Ty;
         sema::BoolType  *BoolTy;
+        sema::ErrorType *ErrorTy;
 
         template <typename T, typename FoldingSetType, typename... Args>
         T *getOrCreateType(FoldingSetType &Set, Args &&...Arguments) {
@@ -52,9 +55,15 @@ namespace astra::frontend {
         sema::FloatType *getFloatType() const { return F32Ty; }
         sema::FloatType *getDoubleType() const { return F64Ty; }
         sema::BoolType  *getBoolType() const { return BoolTy; }
+        sema::ErrorType *getErrorType() const { return ErrorTy; }
         sema::ArrayType *getArrayType(sema::Type *ElementType, size_t Size);
         sema::FunctionType *
         getFunctionType(sema::Type                  *ReturnType,
                         llvm::ArrayRef<sema::Type *> ParamTypes);
+        sema::ClassType *getClassType(llvm::StringRef Name);
+        sema::ClassType *getClassType(llvm::StringRef Name, llvm::ArrayRef<sema::ClassType::Member> Members);
+
+        bool        canImplicitCast(sema::Type *From, sema::Type *To) const;
+        sema::Type *getCommonType(sema::Type *T1, sema::Type *T2) const;
     };
 } // namespace astra::frontend

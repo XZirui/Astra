@@ -1,17 +1,19 @@
 #pragma once
 
 #include "astra/sema/Type.hpp"
-#include "astra/support/Identifier.hpp"
-
+#include "astra/support/SourceRange.hpp"
 #include <llvm/ADT/StringMap.h>
 
 namespace astra::sema {
-    enum class SymbolKind { Variable, Function, Parameter };
+    enum class SymbolKind { Variable, Function, Parameter, Class };
 
     struct Symbol {
-        support::Identifier *Name;
+        llvm::StringRef      Name;
         Type                *Type;
         SymbolKind           Kind;
+        support::SourceRange DefinitionRange;
+        bool                 IsConst = false;
+        bool                 IsComplete = false;
     };
 
     class SymbolTable {
@@ -23,23 +25,20 @@ namespace astra::sema {
         explicit SymbolTable(SymbolTable *Parent) : ParentScope(Parent) {}
 
         Symbol *lookup(llvm::StringRef Name) {
-            auto It = CurrentScope.find(Name);
-            if (It != CurrentScope.end()) {
-                return It->second;
-            }
-            if (ParentScope) {
-                return ParentScope->lookup(Name);
-            }
-            return nullptr;
+            auto *Target = lookupCurrent(Name);
+            return Target ? Target
+                          : (ParentScope ? ParentScope->lookup(Name) : nullptr);
         }
 
-        bool exists(llvm::StringRef Name) {
-            return lookup(Name) != nullptr;
+        Symbol *lookupCurrent(llvm::StringRef Name) {
+            auto It = CurrentScope.find(Name);
+            return It != CurrentScope.end() ? It->second : nullptr;
         }
+
+        bool exists(llvm::StringRef Name) { return lookup(Name) != nullptr; }
 
         void insert(Symbol *Sym) {
-            auto [It, Inserted] =
-                CurrentScope.insert({Sym->Name->getName(), Sym});
+            auto [It, Inserted] = CurrentScope.insert({Sym->Name, Sym});
             assert(Inserted && "Symbol already exists in current scope");
         }
     };

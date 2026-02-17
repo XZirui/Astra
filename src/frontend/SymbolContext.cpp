@@ -20,13 +20,4 @@ namespace astra::frontend {
             }
         }
     }
-
-    void SymbolContext::createSymbol(support::Identifier *Identifier,
-                                     sema::Type *Type, sema::SymbolKind Kind) const {
-        assert(CurrentScope != nullptr && "Cannot create symbol without an active scope");
-        auto *NewSymbol =
-            CompilerCtx.create<sema::Symbol>(Identifier, Type, Kind);
-        CurrentScope->insert(NewSymbol);
-    }
-
 } // namespace astra::frontend

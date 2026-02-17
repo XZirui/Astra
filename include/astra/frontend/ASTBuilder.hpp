@@ -36,6 +36,26 @@ namespace astra::frontend {
         visitParameter(parser::AstraParser::ParameterContext *Ctx) override;
         std::any visitType(parser::AstraParser::TypeContext *Ctx) override;
         std::any
+        visitParenType(parser::AstraParser::ParenTypeContext *Ctx) override;
+        std::any
+        visitTypeRef(parser::AstraParser::TypeRefContext *Ctx) override;
+        std::any visitFunctionType(
+            parser::AstraParser::FunctionTypeContext *Ctx) override;
+        std::any visitParamTypeList(
+            parser::AstraParser::ParamTypeListContext *Ctx) override;
+        std::any
+        visitVoidType(parser::AstraParser::VoidTypeContext *Ctx) override;
+        std::any
+        visitBoolType(parser::AstraParser::BoolTypeContext *Ctx) override;
+        std::any
+        visitIntType(parser::AstraParser::IntTypeContext *Ctx) override;
+        std::any
+        visitLongType(parser::AstraParser::LongTypeContext *Ctx) override;
+        std::any
+        visitFloatType(parser::AstraParser::FloatTypeContext *Ctx) override;
+        std::any
+        visitDoubleType(parser::AstraParser::DoubleTypeContext *Ctx) override;
+        std::any
         visitStatement(parser::AstraParser::StatementContext *Ctx) override;
         std::any
         visitBlockStmt(parser::AstraParser::BlockStmtContext *Ctx) override;
@@ -58,6 +78,14 @@ namespace astra::frontend {
         visitEquality(parser::AstraParser::EqualityContext *Ctx) override;
         std::any
         visitComparison(parser::AstraParser::ComparisonContext *Ctx) override;
+        std::any
+        visitBitwiseOr(parser::AstraParser::BitwiseOrContext *Ctx) override;
+        std::any
+        visitBitwiseXor(parser::AstraParser::BitwiseXorContext *Ctx) override;
+        std::any
+        visitBitwiseAnd(parser::AstraParser::BitwiseAndContext *Ctx) override;
+        std::any visitBitwiseShift(
+            parser::AstraParser::BitwiseShiftContext *Ctx) override;
         std::any
         visitAddition(parser::AstraParser::AdditionContext *Ctx) override;
         std::any visitMultiplication(

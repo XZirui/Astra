@@ -1,10 +1,9 @@
 #pragma once
 
+#include "CompilerContext.hpp"
 #include "astra/sema/SymbolTable.hpp"
 
 namespace astra::frontend {
-    class CompilerContext;
-
     class SymbolContext {
         CompilerContext                                &CompilerCtx;
         sema::SymbolTable                              *CurrentScope{nullptr};
@@ -20,11 +19,43 @@ namespace astra::frontend {
         void popScope() { destroyCurrentScope(); }
 
         sema::Symbol *lookup(llvm::StringRef Name) const {
-            assert(CurrentScope != nullptr && "Cannot lookup symbol without an active scope");
+            assert(CurrentScope != nullptr &&
+                   "Cannot lookup symbol without an active scope");
             return CurrentScope->lookup(Name);
         }
 
-        void createSymbol(support::Identifier *Identifier, sema::Type *Type,
-                          sema::SymbolKind Kind) const;
+        sema::Symbol *lookupCurrent(llvm::StringRef Name) const {
+            assert(CurrentScope != nullptr &&
+                   "Cannot lookup symbol without an active scope");
+            return CurrentScope->lookupCurrent(Name);
+        }
+
+        bool existsCurrent(llvm::StringRef Name) const {
+            assert(CurrentScope != nullptr &&
+                   "Cannot lookup symbol without an active scope");
+            return CurrentScope->exists(Name);
+        }
+
+        template <typename... ArgTypes> void createSymbol(ArgTypes &&...Args) {
+            assert(CurrentScope != nullptr &&
+                   "Cannot create symbol without an active scope");
+            auto *NewSymbol = CompilerCtx.create<sema::Symbol>(
+                std::forward<ArgTypes>(Args)...);
+            CurrentScope->insert(NewSymbol);
+        }
+
+        class ScopeGuard {
+            SymbolContext &Ctx;
+
+        public:
+            explicit ScopeGuard(SymbolContext &Ctx) : Ctx(Ctx) {
+                Ctx.pushScope();
+            }
+
+            ~ScopeGuard() { Ctx.popScope(); }
+
+            ScopeGuard(const ScopeGuard &) = delete;
+            ScopeGuard &operator=(const ScopeGuard &) = delete;
+        };
     };
 } // namespace astra::frontend

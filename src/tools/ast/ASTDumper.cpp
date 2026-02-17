@@ -2,6 +2,7 @@
 
 #include "astra/sema/Type.hpp"
 #include "astra/support/SourceRangeFmt.hpp"
+#include <llvm/ADT/SmallString.h>
 
 template <> struct fmt::formatter<astra::ast::Op> {
     constexpr auto parse(format_parse_context &Ctx) { return Ctx.begin(); }
@@ -20,10 +21,24 @@ template <> struct fmt::formatter<astra::ast::Op> {
             return fmt::format_to(Ctx.out(), "/");
         case Mod:
             return fmt::format_to(Ctx.out(), "%");
+        case Not:
+            return fmt::format_to(Ctx.out(), "!");
         case Eq:
             return fmt::format_to(Ctx.out(), "==");
         case Neq:
             return fmt::format_to(Ctx.out(), "!=");
+        case LShift:
+            return fmt::format_to(Ctx.out(), "<<");
+        case RShift:
+            return fmt::format_to(Ctx.out(), ">>");
+        case BitAnd:
+            return fmt::format_to(Ctx.out(), "&");
+        case BitXor:
+            return fmt::format_to(Ctx.out(), "^");
+        case BitOr:
+            return fmt::format_to(Ctx.out(), "|");
+        case BitNot:
+            return fmt::format_to(Ctx.out(), "~");
         case Lt:
             return fmt::format_to(Ctx.out(), "<");
         case Gt:
@@ -84,15 +99,17 @@ namespace astra::tools::ast {
     void ASTDumper::visitFunctionDecl(const FunctionDecl *FunctionDecl) {
         Out.print("FunctionDecl {}:\n", FunctionDecl->Range);
         Out.push();
-        Out.print("Name={}\n", FunctionDecl->Name->getName().data());
+        Out.print("Name={}\n", FunctionDecl->Name.str());
         Out.print("Params:\n");
         Out.push();
         for (auto *const Param : FunctionDecl->Params) {
             visit(Param);
         }
         Out.pop();
-        Out.print("ReturnType: {}\n",
-                  FunctionDecl->ReturnType->Name->getName().data());
+        Out.print("ReturnType: \n");
+        Out.push();
+        visit(FunctionDecl->ReturnType);
+        Out.pop();
         Out.print("Body:\n");
         Out.push();
         visit(FunctionDecl->Body);
@@ -103,9 +120,70 @@ namespace astra::tools::ast {
     void ASTDumper::visitParamDecl(const ParamDecl *ParamDecl) {
         Out.print("ParamDecl {}:\n", ParamDecl->Range);
         Out.push();
-        Out.print("Name={}\n", ParamDecl->Name->getName().data());
-        Out.print("Type={}\n", ParamDecl->ParamType->Name->getName().data());
+        Out.print("Name={}\n", ParamDecl->Name.str());
+        Out.print("Type:\n");
+        Out.push();
+        visit(ParamDecl->ParamType);
         Out.pop();
+        Out.pop();
+    }
+
+    void ASTDumper::visitVoidTypeRef(const VoidTypeRef *VoidTypeRef) {
+        Out.print("Void\n");
+    }
+
+    void ASTDumper::visitBoolTypeRef(const BoolTypeRef *BoolTypeRef) {
+        Out.print("Bool\n");
+    }
+
+    void ASTDumper::visitIntTypeRef(const IntTypeRef *IntTypeRef) {
+        Out.print("Int\n");
+    }
+
+    void ASTDumper::visitLongTypeRef(const LongTypeRef *LongTypeRef) {
+        Out.print("Long\n");
+    }
+
+    void ASTDumper::visitFloatTypeRef(const FloatTypeRef *FloatTypeRef) {
+        Out.print("Float\n");
+    }
+
+    void ASTDumper::visitDoubleTypeRef(const DoubleTypeRef *DoubleTypeRef) {
+        Out.print("Double\n");
+    }
+
+    void ASTDumper::visitArrayTypeRef(const ArrayTypeRef *ArrayTypeRef) {
+        Out.print("Array:\n");
+        Out.push();
+        Out.print("ElementType:\n");
+        Out.push();
+        visit(ArrayTypeRef->ElementType);
+        Out.pop();
+        Out.print("Size:\n");
+        visit(ArrayTypeRef->Size);
+        Out.pop();
+    }
+
+    void
+    ASTDumper::visitFunctionTypeRef(const FunctionTypeRef *FunctionTypeRef) {
+        Out.print("Function:\n");
+        Out.push();
+        Out.print("ReturnType:\n");
+        Out.push();
+        visit(FunctionTypeRef->ReturnType);
+        Out.pop();
+        for (size_t Index = 0; Index < FunctionTypeRef->ParamTypes.size();
+             ++Index) {
+            Out.print("Param {}:\n", Index);
+            Out.push();
+            visit(FunctionTypeRef->ParamTypes[Index]);
+            Out.pop();
+        }
+        Out.pop();
+    }
+
+    void ASTDumper::visitClassTypeRef(const ClassTypeRef *ClassTypeRef) {
+        Out.print("Class: {}\n", ClassTypeRef->ClassName.str());
     }
 
     void ASTDumper::visitBlockStmt(const BlockStmt *BlockStmt) {
@@ -164,7 +242,9 @@ namespace astra::tools::ast {
     void ASTDumper::visitIntLiteral(const IntLiteral *IntLiteral) {
         Out.print("IntLiteral {}:\n", IntLiteral->Range);
         Out.push();
-        Out.print("Value={}\n", IntLiteral->Value);
+        llvm::SmallString<64> Buffer;
+        IntLiteral->Value.toString(Buffer);
+        Out.print("Value={}\n", Buffer.c_str());
         Out.pop();
     }
 
@@ -175,12 +255,13 @@ namespace astra::tools::ast {
         Out.pop();
     }
 
-    void
-    ASTDumper::visitFloatingLiteral(const FloatingLiteral *FloatingLiteral) {
-        Out.print("FloatingLiteral {}:\n", FloatingLiteral->Range);
+    void ASTDumper::visitFloatLiteral(const FloatLiteral *FloatLiteral) {
+        Out.print("FloatLiteral {}:\n", FloatLiteral->Range);
         Out.push();
-        Out.print("Kind={}\n", FloatingLiteral->FloatKind);
-        Out.print("Value={}\n", FloatingLiteral->Value);
+        Out.print("Kind={}\n", FloatLiteral->FloatKind);
+        llvm::SmallString<64> Buffer;
+        FloatLiteral->Value.toString(Buffer);
+        Out.print("Value={}\n", Buffer.c_str());
         Out.pop();
     }
 
@@ -191,7 +272,7 @@ namespace astra::tools::ast {
     void ASTDumper::visitVarExpr(const VarExpr *VarExpr) {
         Out.print("VarExpr {}:\n", VarExpr->Range);
         Out.push();
-        Out.print("Name={}\n", VarExpr->Name->getName().data());
+        Out.print("Name={}\n", VarExpr->Name.str());
         Out.pop();
     }
 

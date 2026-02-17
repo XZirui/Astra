@@ -127,7 +127,28 @@ comparisonOperator
     ;
 
 comparison
-    : addition (comparisonOperator addition)?
+    : bitwiseOr (comparisonOperator bitwiseOr)?
+    ;
+
+bitwiseOr
+    : bitwiseXor (BIT_OR bitwiseXor)*
+    ;
+
+bitwiseXor
+    : bitwiseAnd (BIT_XOR bitwiseAnd)*
+    ;
+
+bitwiseAnd
+    : bitwiseShift (BIT_AND bitwiseShift)*
+    ;
+
+bitwiseShiftOperator
+    : LSHIFT
+    | RSHIFT
+    ;
+
+bitwiseShift
+    : addition (bitwiseShiftOperator addition)*
     ;
 
 additionOperator
@@ -153,6 +174,8 @@ multiplication
 unaryOperator
     : ADD
     | SUB
+    | NOT
+    | BIT_NOT
     ;
 
 unaryExpr

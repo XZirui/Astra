@@ -1,11 +1,15 @@
 // ReSharper disable once CppMissingIncludeGuard
 
-ABSTRACT_NODE(Expr, ASTNode)
-ABSTRACT_NODE(LiteralExpr, Expr)
+ABSTRACT_NODE(Expr, ASTNode,
+    ATTR(bool, IsConstexpr = false)
+)
+ABSTRACT_NODE(LiteralExpr, Expr,
+    ATTR(bool, IsConstexpr = true)
+)
 
 // primaryExpr : INTEGER_LITERAL
 NODE(IntLiteral, LiteralExpr,
-    ATTR(uint64_t, Value = 0)
+    ATTR(llvm::APSInt, Value{0})
 )
 
 // primaryExpr : BOOLEAN_LITERAL
@@ -17,14 +21,14 @@ NODE(BoolLiteral, LiteralExpr,
 NODE(NullLiteral, LiteralExpr, )
 
 // primaryExpr : FLOAT_LITERAL | DOUBLE_LITERAL
-NODE(FloatingLiteral, LiteralExpr,
+NODE(FloatLiteral, LiteralExpr,
     ATTR(FloatType, FloatKind)
-    ATTR(double, Value = 0.0)
+    ATTR(llvm::APFloat, Value{llvm::APFloat::getZero(llvm::APFloat::IEEEsingle())})
 )
 
 // primaryExpr : IDENTIFIER
 NODE(VarExpr, Expr,
-    ATTR(support::Identifier *, Name)
+    ATTR(llvm::StringRef, Name)
 )
 
 // unaryExpr

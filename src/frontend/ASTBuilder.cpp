@@ -1,6 +1,6 @@
 #include "astra/frontend/ASTBuilder.hpp"
 #include "astra/sema/Type.hpp"
-#include <charconv>
+#include <llvm/Support/Error.h>
 
 using namespace astra::ast;
 
@@ -121,10 +121,96 @@ namespace astra::frontend {
     }
 
     std::any ASTBuilder::visitType(parser::AstraParser::TypeContext *Ctx) {
-        auto *Result =
-            CompilerCtx.create<TypeRef>(support::SourceRange::rangeOf(Ctx));
-        Result->Name = CompilerCtx.getIdentifier(Ctx->getText());
+        if (Ctx->functionType()) {
+            return visit(Ctx->functionType());
+        }
+
+        TypeRef *Result;
+        if (Ctx->parenType()) {
+            Result = std::any_cast<TypeRef *>(visit(Ctx->parenType()));
+        } else if (Ctx->typeRef()) {
+            Result = std::any_cast<TypeRef *>(visit(Ctx->typeRef()));
+        } else {
+            Result = std::any_cast<TypeRef *>(visit(Ctx->builtinType()));
+        }
+
+        for (size_t I = 0; I < Ctx->expression().size(); ++I) {
+            auto *Temp = CompilerCtx.create<ArrayTypeRef>(
+                support::SourceRange::rangeOf(Ctx));
+            Temp->ElementType = Result;
+            Temp->Size = std::any_cast<Expr *>(visit(Ctx->expression(I)));
+            Result = Temp;
+        }
+
         return Result;
+    }
+
+    std::any
+    ASTBuilder::visitParenType(parser::AstraParser::ParenTypeContext *Ctx) {
+        return visit(Ctx->type());
+    }
+
+    std::any
+    ASTBuilder::visitTypeRef(parser::AstraParser::TypeRefContext *Ctx) {
+        auto *Result = CompilerCtx.create<ClassTypeRef>(
+            support::SourceRange::rangeOf(Ctx));
+        Result->ClassName =
+            CompilerCtx.getIdentifier(Ctx->IDENTIFIER()->getText());
+        return static_cast<TypeRef *>(Result);
+    }
+
+    std::any ASTBuilder::visitFunctionType(
+        parser::AstraParser::FunctionTypeContext *Ctx) {
+        auto *Result = CompilerCtx.create<FunctionTypeRef>(
+            support::SourceRange::rangeOf(Ctx));
+        std::vector<TypeRef *> ParamTypes{};
+        if (auto *ParamListCtx = Ctx->paramTypeList()) {
+            ParamTypes =
+                std::any_cast<std::vector<TypeRef *>>(visit(ParamListCtx));
+        }
+        Result->ParamTypes = std::move(ParamTypes);
+        Result->ReturnType = std::any_cast<TypeRef *>(visit(Ctx->type()));
+        return static_cast<TypeRef *>(Result);
+    }
+
+    std::any ASTBuilder::visitParamTypeList(
+        parser::AstraParser::ParamTypeListContext *Ctx) {
+        auto Result = std::vector<TypeRef *>{};
+        for (auto *TypeCtx : Ctx->type()) {
+            Result.emplace_back(std::any_cast<TypeRef *>(visit(TypeCtx)));
+        }
+        return Result;
+    }
+
+    std::any
+    ASTBuilder::visitVoidType(parser::AstraParser::VoidTypeContext *Ctx) {
+        return static_cast<TypeRef *>(CompilerCtx.create<VoidTypeRef>(
+            support::SourceRange::rangeOf(Ctx)));
+    }
+    std::any
+    ASTBuilder::visitBoolType(parser::AstraParser::BoolTypeContext *Ctx) {
+        return static_cast<TypeRef *>(CompilerCtx.create<BoolTypeRef>(
+            support::SourceRange::rangeOf(Ctx)));
+    }
+    std::any
+    ASTBuilder::visitIntType(parser::AstraParser::IntTypeContext *Ctx) {
+        return static_cast<TypeRef *>(
+            CompilerCtx.create<IntTypeRef>(support::SourceRange::rangeOf(Ctx)));
+    }
+    std::any
+    ASTBuilder::visitLongType(parser::AstraParser::LongTypeContext *Ctx) {
+        return static_cast<TypeRef *>(CompilerCtx.create<LongTypeRef>(
+            support::SourceRange::rangeOf(Ctx)));
+    }
+    std::any
+    ASTBuilder::visitFloatType(parser::AstraParser::FloatTypeContext *Ctx) {
+        return static_cast<TypeRef *>(CompilerCtx.create<FloatTypeRef>(
+            support::SourceRange::rangeOf(Ctx)));
+    }
+    std::any
+    ASTBuilder::visitDoubleType(parser::AstraParser::DoubleTypeContext *Ctx) {
+        return static_cast<TypeRef *>(CompilerCtx.create<DoubleTypeRef>(
+            support::SourceRange::rangeOf(Ctx)));
     }
 
     std::any
@@ -248,7 +334,7 @@ namespace astra::frontend {
     std::any
     ASTBuilder::visitComparison(parser::AstraParser::ComparisonContext *Ctx) {
         return buildBinaryExpr(
-            support::SourceRange::rangeOf(Ctx), Ctx->addition(),
+            support::SourceRange::rangeOf(Ctx), Ctx->bitwiseOr(),
             std::vector{Ctx->comparisonOperator()},
             [](parser::AstraParser::ComparisonOperatorContext *Ctx) {
                 if (Ctx->LT()) {
@@ -261,6 +347,43 @@ namespace astra::frontend {
                     return Op::Gt;
                 }
                 return Op::Ge;
+            });
+    }
+
+    std::any
+    ASTBuilder::visitBitwiseOr(parser::AstraParser::BitwiseOrContext *Ctx) {
+        return buildBinaryExpr(
+            support::SourceRange::rangeOf(Ctx), Ctx->bitwiseXor(),
+            Ctx->BIT_OR(),
+            [](antlr4::tree::TerminalNode *) { return Op::BitOr; });
+    }
+
+    std::any
+    ASTBuilder::visitBitwiseXor(parser::AstraParser::BitwiseXorContext *Ctx) {
+        return buildBinaryExpr(
+            support::SourceRange::rangeOf(Ctx), Ctx->bitwiseAnd(),
+            Ctx->BIT_XOR(),
+            [](antlr4::tree::TerminalNode *) { return Op::BitXor; });
+    }
+
+    std::any
+    ASTBuilder::visitBitwiseAnd(parser::AstraParser::BitwiseAndContext *Ctx) {
+        return buildBinaryExpr(
+            support::SourceRange::rangeOf(Ctx), Ctx->bitwiseShift(),
+            Ctx->BIT_AND(),
+            [](antlr4::tree::TerminalNode *) { return Op::BitAnd; });
+    }
+
+    std::any ASTBuilder::visitBitwiseShift(
+        parser::AstraParser::BitwiseShiftContext *Ctx) {
+        return buildBinaryExpr(
+            support::SourceRange::rangeOf(Ctx), Ctx->addition(),
+            Ctx->bitwiseShiftOperator(),
+            [](parser::AstraParser::BitwiseShiftOperatorContext *Ctx) {
+                if (Ctx->LSHIFT()) {
+                    return Op::LShift;
+                }
+                return Op::RShift;
             });
     }
 
@@ -304,7 +427,13 @@ namespace astra::frontend {
             if (Ctx->ADD()) {
                 return Op::Add;
             }
-            return Op::Sub;
+            if (Ctx->SUB()) {
+                return Op::Sub;
+            }
+            if (Ctx->NOT()) {
+                return Op::Not;
+            }
+            return Op::BitNot;
         };
         const auto &Ops = Ctx->unaryOperator();
         for (auto It = Ops.rbegin(); It != Ops.rend(); ++It) {
@@ -335,20 +464,15 @@ namespace astra::frontend {
         auto Text = Ctx->getText();
         auto Base = detectBase(Text);
 
-        auto *Begin = Text.data();
-        auto *End = Begin + Text.size();
         if (Base != IntBase::Dec) {
-            Begin += 2; // skip prefix
+            Text = Text.substr(2); // skip prefix
         }
 
-        uint64_t Value;
-        auto [ptr, ec] =
-            std::from_chars(Begin, End, Value, static_cast<int>(Base));
+        llvm::APSInt Value(llvm::APInt(64, Text, static_cast<unsigned>(Base)),
+                           false);
 
-        if (ec == std::errc::result_out_of_range) {
-            // TODO: handle error: overflow
-        } else if (ec != std::errc{}) {
-            // TODO: handle error: invalid format
+        if (Value.getActiveBits() > 64) {
+            // TODO: handle warning: integer literal is larger than 64-bit
         }
 
         auto *Result =
@@ -374,19 +498,29 @@ namespace astra::frontend {
 
     std::any ASTBuilder::visitFloatLiteral(
         parser::AstraParser::FloatLiteralContext *Ctx) {
-        auto *Result = CompilerCtx.create<FloatingLiteral>(
+        auto *Result = CompilerCtx.create<FloatLiteral>(
             support::SourceRange::rangeOf(Ctx));
+
         Result->FloatKind = FloatType::Float;
-        Result->Value = std::stof(Ctx->getText());
+
+        auto Text = Ctx->getText();
+        Text.pop_back(); // remove suffix 'f' or 'F'
+        Result->Value = llvm::APFloat(llvm::APFloat::IEEEsingle());
+        auto Status = Result->Value.convertFromString(
+            Text, llvm::APFloat::rmNearestTiesToEven);
+        // TODO: handle errors in conversion
         return static_cast<Expr *>(Result);
     }
 
     std::any ASTBuilder::visitDoubleLiteral(
         parser::AstraParser::DoubleLiteralContext *Ctx) {
-        auto *Result = CompilerCtx.create<FloatingLiteral>(
+        auto *Result = CompilerCtx.create<FloatLiteral>(
             support::SourceRange::rangeOf(Ctx));
         Result->FloatKind = FloatType::Double;
-        Result->Value = std::stod(Ctx->getText());
+        Result->Value = llvm::APFloat(llvm::APFloat::IEEEdouble());
+        auto Status = Result->Value.convertFromString(
+            Ctx->getText(), llvm::APFloat::rmNearestTiesToEven);
+        // TODO: handle errors in conversion
         return static_cast<Expr *>(Result);
     }
 } // namespace astra::frontend
