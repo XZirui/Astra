@@ -4,7 +4,6 @@
 #include <string>
 #include <llvm/ADT/DenseMap.h>
 #include <llvm/Support/SourceMgr.h>
-#include <llvm/Support/raw_ostream.h>
 
 namespace astra::support {
     enum class DiagnosisLevel {
@@ -21,9 +20,10 @@ namespace astra::support {
     };
 
     class DiagnosticEngine {
-        const llvm::SourceMgr                     &SrcMgr;
-        const llvm::DenseMap<FileID, unsigned>    &FileIDMap;
-        const llvm::DenseMap<FileID, std::string> &FileNameMap;
+        const llvm::SourceMgr                      &SrcMgr;
+        const llvm::DenseMap<FileID, unsigned>     &FileIDMap;
+        const llvm::DenseMap<FileID, std::string>  &FileNameMap;
+        llvm::DenseMap<FileID, std::vector<size_t>> LineOffsetCache;
 
         std::vector<Diagnostic> Diagnostics;
         size_t                  ErrorCount = 0;
@@ -33,9 +33,46 @@ namespace astra::support {
         void report(const SourceRange &Range, llvm::StringRef Message,
                     DiagnosisLevel Level);
 
+        llvm::StringRef getLineContent(FileID File, size_t Line) {
+            unsigned BufferID = getLLVMBufferID(File);
+            if (BufferID == 0) {
+                return {};
+            }
+            auto *Buffer = SrcMgr.getMemoryBuffer(BufferID);
+            auto  FileContent = Buffer->getBuffer();
+            auto &LineIndex = getLineOffset(File);
+            if (Line == 0 || Line > LineIndex.size()) {
+                return {};
+            }
+
+            auto LineStart = LineIndex[Line - 1];
+            auto LineEnd = LineIndex[Line] - 1; // Exclude the newline character
+            return FileContent.slice(LineStart, LineEnd);
+        }
+
         unsigned getLLVMBufferID(FileID FID) const {
             const auto It = FileIDMap.find(FID);
             return It != FileIDMap.end() ? It->second : 0;
+        }
+
+        std::vector<size_t> &getLineOffset(FileID File) {
+            auto It = LineOffsetCache.find(File);
+            if (It != LineOffsetCache.end()) {
+                return It->second;
+            }
+
+            unsigned BufferID = getLLVMBufferID(File);
+            auto    *Buffer = SrcMgr.getMemoryBuffer(BufferID);
+
+            llvm::StringRef     FileContent = Buffer->getBuffer();
+            std::vector<size_t> Lines = {0};
+            for (size_t I = 0; I < FileContent.size(); ++I) {
+                if (FileContent[I] == '\n') {
+                    Lines.emplace_back(I + 1);
+                }
+            }
+            Lines.emplace_back(FileContent.size());
+            return LineOffsetCache[File] = std::move(Lines);
         }
 
     public:

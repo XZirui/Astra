@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 
 namespace astra::support {
@@ -9,14 +10,16 @@ namespace astra::support {
         uint64_t Line = 0;
         uint64_t Column = 0;
         uint64_t Offset = 0;
+
+        auto operator<=>(const SourceLocation &Other) const {
+            return Offset <=> Other.Offset;
+        }
     };
 
     struct SourceRange {
         SourceLocation Begin;
         SourceLocation End;
         FileID         File{};
-
-        // TODO: support For FileID management
 
         // Create SourceRange from an ANTLR4 parser rule context
         // [begin, end)
@@ -34,6 +37,14 @@ namespace astra::support {
                                    Stop->getText().size() + 1,
                                static_cast<uint64_t>(Stop->getStopIndex() + 1)},
                 FileId};
+        }
+
+        SourceRange extend(const SourceRange &Other) const {
+            if (Other.File != File) {
+                return *this; // cannot extend across different files
+            }
+            return SourceRange{std::min(Begin, Other.Begin),
+                               std::max(End, Other.End), File};
         }
     };
 } // namespace astra::support

@@ -3,14 +3,15 @@
 #include "CompilerContext.hpp"
 #include "astra/ast/Program.hpp"
 #include "astra/parser/AstraParserBaseVisitor.h"
+#include "astra/support/Diagnostic.hpp"
 
 namespace astra::frontend {
     class ASTBuilder : public parser::AstraParserBaseVisitor {
-        CompilerContext &CompilerCtx;
+        CompilerContext           &CompilerCtx;
+        support::DiagnosticEngine &DiagEngine;
 
         template <typename SubCtx, typename CtxOp, typename Getter>
-        std::any buildBinaryExpr(support::SourceRange       Range,
-                                 const std::vector<SubCtx> &Subs,
+        std::any buildBinaryExpr(const std::vector<SubCtx> &Subs,
                                  const std::vector<CtxOp>  &Ops,
                                  Getter                     GetterFunction);
 

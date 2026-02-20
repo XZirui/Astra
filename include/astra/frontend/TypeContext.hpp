@@ -57,6 +57,7 @@ namespace astra::frontend {
         sema::BoolType  *getBoolType() const { return BoolTy; }
         sema::ErrorType *getErrorType() const { return ErrorTy; }
         sema::ArrayType *getArrayType(sema::Type *ElementType, size_t Size);
+        sema::ArrayType *getArrayType(sema::Type *ElementType);
         sema::FunctionType *
         getFunctionType(sema::Type                  *ReturnType,
                         llvm::ArrayRef<sema::Type *> ParamTypes);

@@ -3,11 +3,11 @@
 #include <llvm/Support/Error.h>
 
 using namespace astra::ast;
+using astra::support::SourceRange;
 
 namespace astra::frontend {
     template <typename SubCtx, typename CtxOp, typename Getter>
-    std::any ASTBuilder::buildBinaryExpr(support::SourceRange       Range,
-                                         const std::vector<SubCtx> &Subs,
+    std::any ASTBuilder::buildBinaryExpr(const std::vector<SubCtx> &Subs,
                                          const std::vector<CtxOp>  &Ops,
                                          Getter GetterFunction) {
         if (Subs.size() == 1) {
@@ -16,7 +16,8 @@ namespace astra::frontend {
 
         auto *Result = std::any_cast<Expr *>(visit(Subs[0]));
         for (size_t I = 1; I < Subs.size(); ++I) {
-            auto *Temp = CompilerCtx.create<BinaryExpr>(Range);
+            auto *Temp = CompilerCtx.create<BinaryExpr>(
+                Result->Range.extend(SourceRange::rangeOf(Subs[I])));
             Temp->Operator = GetterFunction(Ops[I - 1]);
             Temp->LHS = Result;
             Temp->RHS = std::any_cast<Expr *>(visit(Subs[I]));
@@ -26,7 +27,8 @@ namespace astra::frontend {
         return Result;
     }
 
-    ASTBuilder::ASTBuilder(CompilerContext &Ctx) : CompilerCtx(Ctx) {}
+    ASTBuilder::ASTBuilder(CompilerContext &Ctx)
+        : CompilerCtx(Ctx), DiagEngine(Ctx.getDiagEngine()) {}
 
     Program *ASTBuilder::build(parser::AstraParser::FileContext *Ctx) {
         return std::any_cast<Program *>(visit(Ctx));
@@ -52,8 +54,7 @@ namespace astra::frontend {
     }
 
     std::any ASTBuilder::visitFile(parser::AstraParser::FileContext *Ctx) {
-        auto *Result =
-            CompilerCtx.create<Program>(support::SourceRange::rangeOf(Ctx));
+        auto *Result = CompilerCtx.create<Program>(SourceRange::rangeOf(Ctx));
 
         for (auto *ObjCtx : Ctx->topLevelObject()) {
             Result->Objects.emplace_back(
@@ -66,8 +67,8 @@ namespace astra::frontend {
     std::any ASTBuilder::visitTopLevelObject(
         parser::AstraParser::TopLevelObjectContext *Ctx) {
         // TODO
-        auto *Result = CompilerCtx.create<TopLevelObject>(
-            support::SourceRange::rangeOf(Ctx));
+        auto *Result =
+            CompilerCtx.create<TopLevelObject>(SourceRange::rangeOf(Ctx));
         Result->Declaration = std::any_cast<Decl *>(visit(Ctx->declaration()));
         return Result;
     }
@@ -83,8 +84,8 @@ namespace astra::frontend {
 
     std::any ASTBuilder::visitFunctionDecl(
         parser::AstraParser::FunctionDeclContext *Ctx) {
-        auto *Result = CompilerCtx.create<FunctionDecl>(
-            support::SourceRange::rangeOf(Ctx));
+        auto *Result =
+            CompilerCtx.create<FunctionDecl>(SourceRange::rangeOf(Ctx));
         Result->Name = CompilerCtx.getIdentifier(Ctx->IDENTIFIER()->getText());
         if (Ctx->paramList()) {
             Result->Params = std::any_cast<std::vector<ParamDecl *>>(
@@ -106,8 +107,7 @@ namespace astra::frontend {
 
     std::any
     ASTBuilder::visitParameter(parser::AstraParser::ParameterContext *Ctx) {
-        auto *Result =
-            CompilerCtx.create<ParamDecl>(support::SourceRange::rangeOf(Ctx));
+        auto *Result = CompilerCtx.create<ParamDecl>(SourceRange::rangeOf(Ctx));
         Result->ParamKind =
             ParamType::Default; // TODO: support other param types
         Result->Name = CompilerCtx.getIdentifier(Ctx->IDENTIFIER()->getText());
@@ -135,8 +135,8 @@ namespace astra::frontend {
         }
 
         for (size_t I = 0; I < Ctx->expression().size(); ++I) {
-            auto *Temp = CompilerCtx.create<ArrayTypeRef>(
-                support::SourceRange::rangeOf(Ctx));
+            auto *Temp =
+                CompilerCtx.create<ArrayTypeRef>(SourceRange::rangeOf(Ctx));
             Temp->ElementType = Result;
             Temp->Size = std::any_cast<Expr *>(visit(Ctx->expression(I)));
             Result = Temp;
@@ -152,8 +152,8 @@ namespace astra::frontend {
 
     std::any
     ASTBuilder::visitTypeRef(parser::AstraParser::TypeRefContext *Ctx) {
-        auto *Result = CompilerCtx.create<ClassTypeRef>(
-            support::SourceRange::rangeOf(Ctx));
+        auto *Result =
+            CompilerCtx.create<ClassTypeRef>(SourceRange::rangeOf(Ctx));
         Result->ClassName =
             CompilerCtx.getIdentifier(Ctx->IDENTIFIER()->getText());
         return static_cast<TypeRef *>(Result);
@@ -161,8 +161,8 @@ namespace astra::frontend {
 
     std::any ASTBuilder::visitFunctionType(
         parser::AstraParser::FunctionTypeContext *Ctx) {
-        auto *Result = CompilerCtx.create<FunctionTypeRef>(
-            support::SourceRange::rangeOf(Ctx));
+        auto *Result =
+            CompilerCtx.create<FunctionTypeRef>(SourceRange::rangeOf(Ctx));
         std::vector<TypeRef *> ParamTypes{};
         if (auto *ParamListCtx = Ctx->paramTypeList()) {
             ParamTypes =
@@ -184,33 +184,33 @@ namespace astra::frontend {
 
     std::any
     ASTBuilder::visitVoidType(parser::AstraParser::VoidTypeContext *Ctx) {
-        return static_cast<TypeRef *>(CompilerCtx.create<VoidTypeRef>(
-            support::SourceRange::rangeOf(Ctx)));
+        return static_cast<TypeRef *>(
+            CompilerCtx.create<VoidTypeRef>(SourceRange::rangeOf(Ctx)));
     }
     std::any
     ASTBuilder::visitBoolType(parser::AstraParser::BoolTypeContext *Ctx) {
-        return static_cast<TypeRef *>(CompilerCtx.create<BoolTypeRef>(
-            support::SourceRange::rangeOf(Ctx)));
+        return static_cast<TypeRef *>(
+            CompilerCtx.create<BoolTypeRef>(SourceRange::rangeOf(Ctx)));
     }
     std::any
     ASTBuilder::visitIntType(parser::AstraParser::IntTypeContext *Ctx) {
         return static_cast<TypeRef *>(
-            CompilerCtx.create<IntTypeRef>(support::SourceRange::rangeOf(Ctx)));
+            CompilerCtx.create<IntTypeRef>(SourceRange::rangeOf(Ctx)));
     }
     std::any
     ASTBuilder::visitLongType(parser::AstraParser::LongTypeContext *Ctx) {
-        return static_cast<TypeRef *>(CompilerCtx.create<LongTypeRef>(
-            support::SourceRange::rangeOf(Ctx)));
+        return static_cast<TypeRef *>(
+            CompilerCtx.create<LongTypeRef>(SourceRange::rangeOf(Ctx)));
     }
     std::any
     ASTBuilder::visitFloatType(parser::AstraParser::FloatTypeContext *Ctx) {
-        return static_cast<TypeRef *>(CompilerCtx.create<FloatTypeRef>(
-            support::SourceRange::rangeOf(Ctx)));
+        return static_cast<TypeRef *>(
+            CompilerCtx.create<FloatTypeRef>(SourceRange::rangeOf(Ctx)));
     }
     std::any
     ASTBuilder::visitDoubleType(parser::AstraParser::DoubleTypeContext *Ctx) {
-        return static_cast<TypeRef *>(CompilerCtx.create<DoubleTypeRef>(
-            support::SourceRange::rangeOf(Ctx)));
+        return static_cast<TypeRef *>(
+            CompilerCtx.create<DoubleTypeRef>(SourceRange::rangeOf(Ctx)));
     }
 
     std::any
@@ -239,8 +239,7 @@ namespace astra::frontend {
 
     std::any
     ASTBuilder::visitBlockStmt(parser::AstraParser::BlockStmtContext *Ctx) {
-        auto *Result =
-            CompilerCtx.create<BlockStmt>(support::SourceRange::rangeOf(Ctx));
+        auto *Result = CompilerCtx.create<BlockStmt>(SourceRange::rangeOf(Ctx));
 
         for (auto *StmtCtx : Ctx->statement()) {
             Result->Statements.emplace_back(
@@ -256,8 +255,7 @@ namespace astra::frontend {
             ElseStmt = std::any_cast<Stmt *>(visit(Ctx->statement(1)));
         }
 
-        auto *Result =
-            CompilerCtx.create<IfStmt>(support::SourceRange::rangeOf(Ctx));
+        auto *Result = CompilerCtx.create<IfStmt>(SourceRange::rangeOf(Ctx));
         Result->Condition = std::any_cast<Expr *>(visit(Ctx->expression()));
         Result->ThenBranch = std::any_cast<Stmt *>(visit(Ctx->statement(0)));
         Result->ElseBranch = ElseStmt;
@@ -266,8 +264,7 @@ namespace astra::frontend {
 
     std::any
     ASTBuilder::visitExprStmt(parser::AstraParser::ExprStmtContext *Ctx) {
-        auto *Result =
-            CompilerCtx.create<ExprStmt>(support::SourceRange::rangeOf(Ctx));
+        auto *Result = CompilerCtx.create<ExprStmt>(SourceRange::rangeOf(Ctx));
         Result->Expression = std::any_cast<Expr *>(visit(Ctx->expression()));
         return static_cast<Stmt *>(Result);
     }
@@ -280,7 +277,7 @@ namespace astra::frontend {
         }
 
         auto *Result =
-            CompilerCtx.create<ReturnStmt>(support::SourceRange::rangeOf(Ctx));
+            CompilerCtx.create<ReturnStmt>(SourceRange::rangeOf(Ctx));
         Result->Expression = ReturnValue;
         return static_cast<Stmt *>(Result);
     }
@@ -288,13 +285,13 @@ namespace astra::frontend {
     std::any
     ASTBuilder::visitBreakStmt(parser::AstraParser::BreakStmtContext *Ctx) {
         return static_cast<Stmt *>(
-            CompilerCtx.create<BreakStmt>(support::SourceRange::rangeOf(Ctx)));
+            CompilerCtx.create<BreakStmt>(SourceRange::rangeOf(Ctx)));
     }
 
     std::any ASTBuilder::visitContinueStmt(
         parser::AstraParser::ContinueStmtContext *Ctx) {
-        return static_cast<Stmt *>(CompilerCtx.create<ContinueStmt>(
-            support::SourceRange::rangeOf(Ctx)));
+        return static_cast<Stmt *>(
+            CompilerCtx.create<ContinueStmt>(SourceRange::rangeOf(Ctx)));
     }
 
     std::any
@@ -305,24 +302,21 @@ namespace astra::frontend {
     std::any
     ASTBuilder::visitDisjunction(parser::AstraParser::DisjunctionContext *Ctx) {
         return buildBinaryExpr(
-            support::SourceRange::rangeOf(Ctx), Ctx->conjunction(),
-            std::vector{Ctx->DISJ()},
+            Ctx->conjunction(), std::vector{Ctx->DISJ()},
             [](antlr4::tree::TerminalNode *) { return Op::Disj; });
     }
 
     std::any
     ASTBuilder::visitConjunction(parser::AstraParser::ConjunctionContext *Ctx) {
         return buildBinaryExpr(
-            support::SourceRange::rangeOf(Ctx), Ctx->equality(),
-            std::vector{Ctx->CONJ()},
+            Ctx->equality(), std::vector{Ctx->CONJ()},
             [](antlr4::tree::TerminalNode *) { return Op::Conj; });
     }
 
     std::any
     ASTBuilder::visitEquality(parser::AstraParser::EqualityContext *Ctx) {
         return buildBinaryExpr(
-            support::SourceRange::rangeOf(Ctx), Ctx->comparison(),
-            std::vector{Ctx->equalityOperator()},
+            Ctx->comparison(), std::vector{Ctx->equalityOperator()},
             [](parser::AstraParser::EqualityOperatorContext *Ctx) {
                 if (Ctx->EQ()) {
                     return Op::Eq;
@@ -334,8 +328,7 @@ namespace astra::frontend {
     std::any
     ASTBuilder::visitComparison(parser::AstraParser::ComparisonContext *Ctx) {
         return buildBinaryExpr(
-            support::SourceRange::rangeOf(Ctx), Ctx->bitwiseOr(),
-            std::vector{Ctx->comparisonOperator()},
+            Ctx->bitwiseOr(), std::vector{Ctx->comparisonOperator()},
             [](parser::AstraParser::ComparisonOperatorContext *Ctx) {
                 if (Ctx->LT()) {
                     return Op::Lt;
@@ -353,32 +346,28 @@ namespace astra::frontend {
     std::any
     ASTBuilder::visitBitwiseOr(parser::AstraParser::BitwiseOrContext *Ctx) {
         return buildBinaryExpr(
-            support::SourceRange::rangeOf(Ctx), Ctx->bitwiseXor(),
-            Ctx->BIT_OR(),
+            Ctx->bitwiseXor(), Ctx->BIT_OR(),
             [](antlr4::tree::TerminalNode *) { return Op::BitOr; });
     }
 
     std::any
     ASTBuilder::visitBitwiseXor(parser::AstraParser::BitwiseXorContext *Ctx) {
         return buildBinaryExpr(
-            support::SourceRange::rangeOf(Ctx), Ctx->bitwiseAnd(),
-            Ctx->BIT_XOR(),
+            Ctx->bitwiseAnd(), Ctx->BIT_XOR(),
             [](antlr4::tree::TerminalNode *) { return Op::BitXor; });
     }
 
     std::any
     ASTBuilder::visitBitwiseAnd(parser::AstraParser::BitwiseAndContext *Ctx) {
         return buildBinaryExpr(
-            support::SourceRange::rangeOf(Ctx), Ctx->bitwiseShift(),
-            Ctx->BIT_AND(),
+            Ctx->bitwiseShift(), Ctx->BIT_AND(),
             [](antlr4::tree::TerminalNode *) { return Op::BitAnd; });
     }
 
     std::any ASTBuilder::visitBitwiseShift(
         parser::AstraParser::BitwiseShiftContext *Ctx) {
         return buildBinaryExpr(
-            support::SourceRange::rangeOf(Ctx), Ctx->addition(),
-            Ctx->bitwiseShiftOperator(),
+            Ctx->addition(), Ctx->bitwiseShiftOperator(),
             [](parser::AstraParser::BitwiseShiftOperatorContext *Ctx) {
                 if (Ctx->LSHIFT()) {
                     return Op::LShift;
@@ -390,8 +379,7 @@ namespace astra::frontend {
     std::any
     ASTBuilder::visitAddition(parser::AstraParser::AdditionContext *Ctx) {
         return buildBinaryExpr(
-            support::SourceRange::rangeOf(Ctx), Ctx->multiplication(),
-            Ctx->additionOperator(),
+            Ctx->multiplication(), Ctx->additionOperator(),
             [](parser::AstraParser::AdditionOperatorContext *Ctx) {
                 if (Ctx->ADD()) {
                     return Op::Add;
@@ -403,8 +391,7 @@ namespace astra::frontend {
     std::any ASTBuilder::visitMultiplication(
         parser::AstraParser::MultiplicationContext *Ctx) {
         return buildBinaryExpr(
-            support::SourceRange::rangeOf(Ctx), Ctx->unaryExpr(),
-            Ctx->multiplicationOperator(),
+            Ctx->unaryExpr(), Ctx->multiplicationOperator(),
             [](parser::AstraParser::MultiplicationOperatorContext *Ctx) {
                 if (Ctx->MULT()) {
                     return Op::Mult;
@@ -437,8 +424,8 @@ namespace astra::frontend {
         };
         const auto &Ops = Ctx->unaryOperator();
         for (auto It = Ops.rbegin(); It != Ops.rend(); ++It) {
-            auto *Temp = CompilerCtx.create<UnaryExpr>(
-                support::SourceRange::rangeOf(Ctx));
+            auto *Temp =
+                CompilerCtx.create<UnaryExpr>(SourceRange::rangeOf(Ctx));
             Temp->Operator = Getter(*It);
             Temp->Operand = Result;
             Result = Temp;
@@ -453,8 +440,7 @@ namespace astra::frontend {
 
     std::any
     ASTBuilder::visitVariable(parser::AstraParser::VariableContext *Ctx) {
-        auto *Result =
-            CompilerCtx.create<VarExpr>(support::SourceRange::rangeOf(Ctx));
+        auto *Result = CompilerCtx.create<VarExpr>(SourceRange::rangeOf(Ctx));
         Result->Name = CompilerCtx.getIdentifier(Ctx->getText());
         return static_cast<Expr *>(Result);
     }
@@ -476,7 +462,7 @@ namespace astra::frontend {
         }
 
         auto *Result =
-            CompilerCtx.create<IntLiteral>(support::SourceRange::rangeOf(Ctx));
+            CompilerCtx.create<IntLiteral>(SourceRange::rangeOf(Ctx));
         Result->Value = Value;
         return static_cast<Expr *>(Result);
     }
@@ -484,7 +470,7 @@ namespace astra::frontend {
     std::any
     ASTBuilder::visitBoolLiteral(parser::AstraParser::BoolLiteralContext *Ctx) {
         auto *Result =
-            CompilerCtx.create<BoolLiteral>(support::SourceRange::rangeOf(Ctx));
+            CompilerCtx.create<BoolLiteral>(SourceRange::rangeOf(Ctx));
         Result->Value = (Ctx->getText() == "true");
         return static_cast<Expr *>(Result);
     }
@@ -492,35 +478,67 @@ namespace astra::frontend {
     std::any
     ASTBuilder::visitNullLiteral(parser::AstraParser::NullLiteralContext *Ctx) {
         auto *Result =
-            CompilerCtx.create<NullLiteral>(support::SourceRange::rangeOf(Ctx));
+            CompilerCtx.create<NullLiteral>(SourceRange::rangeOf(Ctx));
         return static_cast<Expr *>(Result);
     }
 
     std::any ASTBuilder::visitFloatLiteral(
         parser::AstraParser::FloatLiteralContext *Ctx) {
-        auto *Result = CompilerCtx.create<FloatLiteral>(
-            support::SourceRange::rangeOf(Ctx));
+        auto *Result =
+            CompilerCtx.create<FloatLiteral>(SourceRange::rangeOf(Ctx));
 
         Result->FloatKind = FloatType::Float;
 
         auto Text = Ctx->getText();
         Text.pop_back(); // remove suffix 'f' or 'F'
         Result->Value = llvm::APFloat(llvm::APFloat::IEEEsingle());
-        auto Status = Result->Value.convertFromString(
-            Text, llvm::APFloat::rmNearestTiesToEven);
-        // TODO: handle errors in conversion
+        auto Status =
+            Result->Value
+                .convertFromString(Text, llvm::APFloat::rmNearestTiesToEven)
+                .get();
+
+        // There are no possible errors in invalid format
+        // since the lexer guarantees the format is correct.
+        if (Status & llvm::APFloat::opOverflow) {
+            DiagEngine.warning(
+                Result->Range,
+                "float literal is too large and will be converted to infinity");
+        } else if (Status & llvm::APFloat::opUnderflow) {
+            DiagEngine.warning(
+                Result->Range,
+                "float literal is too small and will be converted to zero");
+        }
+        // Inexact conversion is ignored since it is common for decimal literals
+        // to be inexact in binary representation.
+
         return static_cast<Expr *>(Result);
     }
 
     std::any ASTBuilder::visitDoubleLiteral(
         parser::AstraParser::DoubleLiteralContext *Ctx) {
-        auto *Result = CompilerCtx.create<FloatLiteral>(
-            support::SourceRange::rangeOf(Ctx));
+        auto *Result =
+            CompilerCtx.create<FloatLiteral>(SourceRange::rangeOf(Ctx));
         Result->FloatKind = FloatType::Double;
         Result->Value = llvm::APFloat(llvm::APFloat::IEEEdouble());
-        auto Status = Result->Value.convertFromString(
-            Ctx->getText(), llvm::APFloat::rmNearestTiesToEven);
-        // TODO: handle errors in conversion
+        auto Status = Result->Value
+                          .convertFromString(Ctx->getText(),
+                                             llvm::APFloat::rmNearestTiesToEven)
+                          .get();
+
+        // There are no possible errors in invalid format
+        // since the lexer guarantees the format is correct.
+        if (Status & llvm::APFloat::opOverflow) {
+            DiagEngine.warning(
+                Result->Range,
+                "float literal is too large and will be converted to infinity");
+        } else if (Status & llvm::APFloat::opUnderflow) {
+            DiagEngine.warning(
+                Result->Range,
+                "float literal is too small and will be converted to zero");
+        }
+        // Inexact conversion is ignored since it is common for decimal literals
+        // to be inexact in binary representation.
+
         return static_cast<Expr *>(Result);
     }
 } // namespace astra::frontend

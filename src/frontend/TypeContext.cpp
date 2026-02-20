@@ -21,6 +21,10 @@ namespace astra::frontend {
         return getOrCreateType<sema::ArrayType>(ArrayTypes, ElementType, Size);
     }
 
+    sema::ArrayType *TypeContext::getArrayType(sema::Type *ElementType) {
+        return getOrCreateType<sema::ArrayType>(ArrayTypes, ElementType);
+    }
+
     sema::FunctionType *
     TypeContext::getFunctionType(sema::Type                  *ReturnType,
                                  llvm::ArrayRef<sema::Type *> ParamTypes) {

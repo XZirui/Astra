@@ -7,7 +7,8 @@
 #include "astra/tools/ast/ASTDumper.hpp"
 
 int main() {
-    auto input = R"(def a() -> void {
+    auto input = R"(
+def a() -> void {
     if (x > 0) {
         return 4 < y + 3 * 2 / 4;
     } else {

@@ -132,9 +132,11 @@ namespace astra::sema {
 
     class ArrayType final : public Type, public llvm::FoldingSetNode {
         Type  *ElementType;
-        size_t Size;
+        size_t Size = 0; // 0 means array of unknown size
 
     public:
+        explicit ArrayType(Type *ElementType)
+            : Type(Kind::Array), ElementType(ElementType) {}
         ArrayType(Type *ElementType, size_t Size)
             : Type(Kind::Array), ElementType(ElementType), Size(Size) {}
 
@@ -146,7 +148,7 @@ namespace astra::sema {
         }
 
         static void profile(llvm::FoldingSetNodeID &ID, const Type *ElementType,
-                            size_t Size) {
+                            size_t Size = 0) {
             ID.AddInteger(static_cast<unsigned>(Kind::Array));
             ID.AddPointer(ElementType);
             ID.AddInteger(Size);
@@ -262,7 +264,8 @@ namespace astra::sema {
         bool   isComplete() const { return IsComplete; }
         size_t getMemberCount() const { return Members.size(); }
         size_t getMemberIndex(llvm::StringRef Name) {
-            return MemberIndices[Name]; // assuming member exists, should be checked by caller
+            return MemberIndices[Name]; // assuming member exists, should be
+                                        // checked by caller
         }
 
         bool addMember(llvm::StringRef Name, Type *Type) {

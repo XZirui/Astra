@@ -9,10 +9,11 @@ namespace astra::frontend {
     class SymbolContext;
 
     class SymbolCollector : public ast::DeclVisitor<SymbolCollector> {
-        CompilerContext   &CompilerCtx;
-        TypeContext       &TypeCtx;
-        SymbolContext     &SymbolCtx;
-        ConstantEvaluator &ConstEval;
+        CompilerContext           &CompilerCtx;
+        TypeContext               &TypeCtx;
+        SymbolContext             &SymbolCtx;
+        support::DiagnosticEngine &DiagEngine;
+        ConstantEvaluator         &ConstEval;
 
     public:
         SymbolCollector(CompilerContext   &CompilerCtx,

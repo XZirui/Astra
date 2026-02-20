@@ -1,6 +1,7 @@
 #pragma once
 
 #include "astra/ast/ASTVisitor.hpp"
+#include "astra/frontend/CompilerContext.hpp"
 #include <llvm/ADT/DenseMap.h>
 
 namespace astra::frontend {
@@ -30,7 +31,7 @@ namespace astra::frontend {
 
     class ConstantValue {
     public:
-        enum class ValueKind { Null, Int, Float, Bool, String, Array };
+        enum class ValueKind { Error, Null, Int, Float, Bool, String, Array };
 
     private:
         ValueKind Kind = ValueKind::Null;
@@ -95,8 +96,7 @@ namespace astra::frontend {
                     return ConstantValue(std::move(FloatValue));
                 }
                 if (isBool()) {
-                    llvm::APFloat FloatValue(llvm::APFloat::IEEEdouble(),
-                                             getBool() ? 1.0 : 0.0);
+                    llvm::APFloat FloatValue(getBool() ? 1.0 : 0.0);
                     return ConstantValue(std::move(FloatValue));
                 }
                 break;
@@ -116,6 +116,12 @@ namespace astra::frontend {
         ConstantValue() = default;
         ~ConstantValue() { destroy(); }
 
+        static ConstantValue error() {
+            ConstantValue Result;
+            Result.Kind = ValueKind::Error;
+            return Result;
+        }
+
         explicit ConstantValue(llvm::APSInt IntValue) : Kind(ValueKind::Int) {
             Storage.IntValue = new llvm::APSInt(std::move(IntValue));
         }
@@ -130,18 +136,30 @@ namespace astra::frontend {
         }
 
         ValueKind getKind() const { return Kind; }
+        bool      isError() const { return Kind == ValueKind::Error; }
+        bool      isNull() const { return Kind == ValueKind::Null; }
         bool      isInt() const { return Kind == ValueKind::Int; }
         bool      isFloat() const { return Kind == ValueKind::Float; }
         bool      isBool() const { return Kind == ValueKind::Bool; }
         bool      isString() const { return Kind == ValueKind::String; }
         bool      isArray() const { return Kind == ValueKind::Array; }
 
-        const llvm::APSInt &getInt() const {
+        llvm::APSInt getInt() const {
             assert(isInt());
             return *Storage.IntValue;
         }
 
-        const llvm::APFloat &getFloat() const {
+        llvm::APSInt toInt() const {
+            if (isInt()) {
+                return getInt();
+            }
+            if (isBool()) {
+                return llvm::APSInt(llvm::APInt(32, getBool() ? 1 : 0));
+            }
+            assert(false && "Cannot convert to int");
+        }
+
+        llvm::APFloat getFloat() const {
             assert(isFloat());
             return *Storage.FloatValue;
         }
@@ -164,8 +182,8 @@ namespace astra::frontend {
 
         ConstantValue operator[](ConstantValue Index) const {
             assert(isArray());
-            assert(Index.isInt());
-            size_t I = Index.getInt().getZExtValue();
+            assert(Index.isInt() || Index.isBool());
+            size_t I = Index.toInt().getZExtValue();
             assert(I < Storage.ArrayValue->size());
             return (*Storage.ArrayValue)[I];
         }
@@ -178,7 +196,7 @@ namespace astra::frontend {
     if (CommonKind == ValueKind::Float) {                                      \
         return ConstantValue(LHS.getFloat() OP RHS.getFloat());                \
     }                                                                          \
-    return ConstantValue(LHS.getInt() OP RHS.getInt());
+    return ConstantValue(LHS.toInt() OP RHS.toInt());
 
         ConstantValue operator+(const ConstantValue &Other) const {
             if (isString() && Other.isString()) {
@@ -207,44 +225,84 @@ namespace astra::frontend {
                     false &&
                     "Modulo operator is not defined for floating-point types");
             }
-            return ConstantValue(getInt() % Other.getInt());
+            return ConstantValue(toInt() % Other.toInt());
+        }
+
+        ConstantValue operator==(const ConstantValue &Other) const {
+            ValueKind CommonKind = getCommonKind(Other);
+            if (CommonKind == ValueKind::String) {
+                // TODO string comparison
+                return ConstantValue(false); // placeholder
+            }
+            if (CommonKind == ValueKind::Null) {
+                return ConstantValue(true);
+            }
+            ConstantValue LHS = promoteTo(CommonKind);
+            ConstantValue RHS = Other.promoteTo(CommonKind);
+            if (CommonKind == ValueKind::Float) {
+                return ConstantValue(LHS.getFloat() == RHS.getFloat());
+            }
+            if (CommonKind == ValueKind::Int) {
+                return ConstantValue(LHS.getInt() == RHS.getInt());
+            }
+            return ConstantValue(LHS.getBool() == RHS.getBool());
+        }
+
+        ConstantValue operator!=(const ConstantValue &Other) const {
+            return !(*this == Other);
+        }
+
+        ConstantValue operator<(const ConstantValue &Other) const {
+            ValueKind CommonKind = getCommonKind(Other);
+            if (CommonKind == ValueKind::String) {
+                // TODO string comparison
+                return ConstantValue(false); // placeholder
+            }
+            ConstantValue LHS = promoteTo(CommonKind);
+            ConstantValue RHS = Other.promoteTo(CommonKind);
+            if (CommonKind == ValueKind::Float) {
+                return ConstantValue(LHS.getFloat() < RHS.getFloat());
+            }
+            if (CommonKind == ValueKind::Int) {
+                return ConstantValue(LHS.getInt() < RHS.getInt());
+            }
+            return ConstantValue(LHS.getBool() < RHS.getBool());
+        }
+
+        ConstantValue operator>(const ConstantValue &Other) const {
+            return Other < *this;
+        }
+
+        ConstantValue operator<=(const ConstantValue &Other) const {
+            return !(Other < *this);
+        }
+
+        ConstantValue operator>=(const ConstantValue &Other) const {
+            return !(*this < Other);
         }
 
         ConstantValue operator&(const ConstantValue &Other) const {
-            assert(isInt() && Other.isInt() &&
-                   "Bitwise AND requires integer operands");
-            return ConstantValue(getInt() & Other.getInt());
+            return ConstantValue(toInt() & Other.toInt());
         }
 
         ConstantValue operator|(const ConstantValue &Other) const {
-            assert(isInt() && Other.isInt() &&
-                   "Bitwise OR requires integer operands");
-            return ConstantValue(getInt() | Other.getInt());
+            return ConstantValue(toInt() | Other.toInt());
         }
 
         ConstantValue operator^(const ConstantValue &Other) const {
-            assert(isInt() && Other.isInt() &&
-                   "Bitwise XOR requires integer operands");
-            return ConstantValue(getInt() ^ Other.getInt());
+            return ConstantValue(toInt() ^ Other.toInt());
         }
 
-        ConstantValue operator~() const {
-            assert(isInt() && "Bitwise NOT requires integer operand");
-            return ConstantValue(~getInt());
-        }
+        ConstantValue operator~() const { return ConstantValue(~toInt()); }
 
         ConstantValue operator<<(const ConstantValue &Other) const {
-            assert(isInt() && Other.isInt() &&
-                   "Shift requires integer operands");
-            return ConstantValue(getInt() << Other.getInt().getZExtValue());
+            return ConstantValue(toInt() << Other.toInt().getZExtValue());
         }
 
         ConstantValue operator>>(const ConstantValue &Other) const {
-            assert(isInt() && Other.isInt() &&
-                   "Shift requires integer operands");
             return ConstantValue(
-                llvm::APSInt(getInt().ashr(Other.getInt().getZExtValue()),
-                             getInt().isSigned()));
+                llvm::APSInt(toInt().ashr(Other.toInt().getZExtValue()),
+                             toInt().isSigned()));
         }
 
         ConstantValue operator&&(const ConstantValue &Other) const {
@@ -255,16 +313,34 @@ namespace astra::frontend {
             return ConstantValue(toBool() || Other.toBool());
         }
 
-        ConstantValue operator!() const {
-            return ConstantValue(!toBool());
+        ConstantValue operator+() const { return *this; }
+        ConstantValue operator-() const {
+            assert(assert((isInt() || isFloat() || isBool()) &&
+                   "Unary minus requires numeric operand");
+            return isInt() ? ConstantValue(-toInt())
+                           : ConstantValue(-getFloat());
         }
+
+        ConstantValue operator!() const { return ConstantValue(!toBool()); }
     };
 
     class ConstantEvaluator : public ast::ExprVisitor<ConstantEvaluator> {
         llvm::DenseMap<const ast::Expr *, ConstantValue> ConstantCache;
+        support::DiagnosticEngine                       &DiagEngine;
 
     public:
+        explicit ConstantEvaluator(const CompilerContext &CompilerCtx)
+            : DiagEngine(CompilerCtx.getDiagEngine()) {}
+
         void evaluate(ast::Expr *E) { visit(E); }
+
+        ConstantValue *getConstantValue(ast::Expr *E) {
+            auto It = ConstantCache.find(E);
+            if (It != ConstantCache.end()) {
+                return &It->second;
+            }
+            return nullptr;
+        }
         void visitIntLiteral(ast::IntLiteral *IntLiteral);
         void visitBoolLiteral(ast::BoolLiteral *BoolLiteral);
         void visitNullLiteral(ast::NullLiteral *NullLiteral);
@@ -274,3 +350,29 @@ namespace astra::frontend {
         void visitBinaryExpr(ast::BinaryExpr *BinaryExpr);
     };
 } // namespace astra::frontend
+
+template <> struct fmt::formatter<astra::frontend::ConstantValue::ValueKind> {
+    constexpr auto parse(format_parse_context &Ctx) { return Ctx.begin(); }
+
+    template <typename FormatContext>
+    auto format(const astra::frontend::ConstantValue::ValueKind &Kind,
+                FormatContext                                   &Ctx) {
+        using enum astra::frontend::ConstantValue::ValueKind;
+        switch (Kind) {
+        case Error:
+            return fmt::format_to(Ctx.out(), "error");
+        case Null:
+            return fmt::format_to(Ctx.out(), "null");
+        case Int:
+            return fmt::format_to(Ctx.out(), "int");
+        case Float:
+            return fmt::format_to(Ctx.out(), "float");
+        case Bool:
+            return fmt::format_to(Ctx.out(), "bool");
+        case String:
+            return fmt::format_to(Ctx.out(), "string");
+        case Array:
+            return fmt::format_to(Ctx.out(), "array");
+        }
+    }
+};

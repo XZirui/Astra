@@ -12,7 +12,7 @@ namespace astra::frontend {
     support::FileID CompilerContext::addSourceFile(llvm::StringRef FileName) {
         auto BufferOrError = llvm::MemoryBuffer::getFile(FileName);
         if (!BufferOrError) {
-            llvm::errs() << "Error reading file: " << FileName << "\n";
+            // llvm::errs() << "Error reading file: " << FileName << "\n";
             return 0;
         }
 
